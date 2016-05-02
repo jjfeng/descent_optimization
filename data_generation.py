@@ -296,7 +296,7 @@ def multi_smooth_features(train_size, smooth_fcn_list, desired_snr=2, feat_range
     X_smooth = np.random.uniform(feat_range[0], feat_range[1], (total_samples, num_features))
     y_smooth = 0
     for idx, fcn in enumerate(smooth_fcn_list):
-        y_smooth += fcn(X_smooth[:, idx])
+        y_smooth += fcn(X_smooth[:, idx]).reshape(total_samples, 1)
 
     epsilon = np.matrix(np.random.randn(total_samples, 1))
     SNR_factor = desired_snr / np.linalg.norm(y_smooth) * np.linalg.norm(epsilon)

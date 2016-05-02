@@ -424,11 +424,14 @@ class SmoothAndLinearProblemWrapperSimple:
 # We have three features, want a smooth fit
 class GenAddModelProblemWrapper:
     def __init__(self, X, train_indices, y, tiny_e=1e-10):
-        num_features = X.shape[1]
-        num_samples = X.shape[0]
+        self.tiny_e = tiny_e
+
+        num_samples, num_features = X.shape
+        self.num_samples = num_samples
+        self.num_features = num_features
 
         # Create smooth penalty matrix for each feature
-        self.diff_matrix = [0] * num_features
+        self.diff_matrices = [0] * num_features
         for i in range(num_features):
             x_features = X[:,i]
             d1_matrix = np.zeros((num_samples, num_samples))
@@ -443,26 +446,26 @@ class GenAddModelProblemWrapper:
             # Check that the inverted distances are all greater than zero
             assert(np.min(inv_dists) >= 0)
 
-            self.diff_matrix[i] = d1_matrix * np.matrix(np.diagflat(inv_dists)) * d1_matrix
-            print "dists", inv_dists
-            print d1_matrix
-            print self.diff_matrix[i]
+            self.diff_matrices[i] = (
+                d1_matrix * np.matrix(np.diagflat(inv_dists)) * d1_matrix
+            )
 
-        train_identifier = np.zeros((len(train_indices), num_samples))
-        train_identifier[np.arange(len(train_indices)), train_indices] = 1
-        print "train_identifier", train_identifier
+        self.train_identifier = np.matrix(np.zeros((len(train_indices), num_samples)))
+        self.train_identifier[np.arange(len(train_indices)), train_indices] = 1
 
         self.thetas = Variable(num_samples, num_features)
         self.lambdas = [Parameter(sign="positive")] * num_features
-        objective = 0.5 * sum_squares(y - train_identifier * sum_entries(self.thetas, axis=1))
+        objective = 0.5 * sum_squares(y - self.train_identifier * sum_entries(self.thetas, axis=1))
         for i in range(num_features):
-            objective += 0.5 * self.lambdas[i] * sum_squares(self.diff_matrix[i] * self.thetas[:,i])
-        objective += tiny_e * sum_squares(self.thetas)
+            D = sp.sparse.coo_matrix(self.diff_matrices[i])
+            D_sparse = cvxopt.spmatrix(D.data, D.row.tolist(), D.col.tolist())
+            objective += 0.5 * self.lambdas[i] * sum_squares(D_sparse * self.thetas[:,i])
+        objective += 0.5 * self.tiny_e * sum_squares(self.thetas)
 
         self.problem = Problem(Minimize(objective), [])
 
     def solve(self, lambdas):
-        print "lambdas", lambdas
+        print "cvxpy solving... lambdas", lambdas
         for i in range(0, len(lambdas)):
             self.lambdas[i].value = lambdas[i]
 

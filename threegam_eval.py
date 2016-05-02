@@ -4,39 +4,72 @@ import matplotlib.pyplot as plt
 from convexopt_solvers import GenAddModelProblemWrapper
 from data_generation import multi_smooth_features
 
-import gen_add_model_gridsearch
+from gen_add_model_hillclimb import GenAddModelHillclimb
+import gen_add_model_gridsearch as gs
 
-np.random.seed(1)
-TRAIN_SIZE = 10
+from common import *
+
+np.random.seed(15)
+TRAIN_SIZE = 20
 
 def identity_fcn(x):
     return x.reshape(x.size, 1)
 
-def plot_res(fitted_thetas, fcn_list, X):
+def crazy_down_sin(x):
+    return np.sin(np.power(x/2, 2)) - x
+
+def plot_res(fitted_thetas, fcn_list, X, outfile="figures/threegam/out.png"):
     num_features = fitted_thetas.shape[1]
     plt.clf()
     for i in range(num_features):
         x_features = X[:,i]
         fcn = fcn_list[i]
         order_x = np.argsort(x_features)
-        plt.plot(fitted_thetas[order_x,i], '.', label="fitted %d" % i, color="red")
-        plt.plot(fcn(x_features[order_x]), '.', label="real %d" % i, color="green")
-    plt.show()
+        plt.plot(
+            x_features[order_x],
+            fcn(x_features[order_x]), # true values
+            'o',
+            x_features[order_x],
+            fitted_thetas[order_x,i], # fitted values
+            '.',
+            label="feat %d" % i
+        )
+    plt.savefig(outfile)
 
 
-smooth_fcn_list = [identity_fcn, np.sin]
+#### Note: there seems to be an identifiability issue
+
+# smooth_fcn_list = [identity_fcn, np.sin, crazy_down_sin]
+smooth_fcn_list = [identity_fcn]
 
 X_train, y_train, X_validate, y_validate, X_test, y_test = multi_smooth_features(
     TRAIN_SIZE,
     smooth_fcn_list,
-    desired_snr=10
+    desired_snr=2,
+    feat_range=[0,10]
 )
-# print X_train
-# print y_train
-# print X_train.shape
-print y_train
-print y_validate
+X_full, train_idx, validate_idx, test_idx = GenAddModelHillclimb.stack((X_train, X_validate, X_test))
 
-best_thetas, best_lambdas = gen_add_model_gridsearch.run(X_train, y_train, X_validate, y_validate, num_lambdas=2)
-X_full = np.vstack((X_train, X_validate))
-plot_res(best_thetas, smooth_fcn_list, X_full)
+print "start"
+hc = GenAddModelHillclimb(X_train, y_train, X_validate, y_validate, X_test)
+print "inited!"
+init_lambdas = np.array([1])
+hc_thetas, cost_path, curr_regularization = hc.run(init_lambdas, debug=True)
+hc_test_error = testerror_multi_smooth(y_test, test_idx, hc_thetas)
+plot_res(hc_thetas[test_idx], smooth_fcn_list, X_test, outfile="figures/threegam/out_hc.png")
+
+gs_thetas, best_lambdas = gs.run(
+    y_train,
+    y_validate,
+    X_full,
+    train_idx,
+    validate_idx,
+    num_lambdas=3,
+    max_lambda=10
+)
+
+gs_test_error = testerror_multi_smooth(y_test, test_idx, gs_thetas)
+plot_res(gs_thetas[test_idx], smooth_fcn_list, X_test, outfile="figures/threegam/out_gs.png")
+
+print "gs_test_error", gs_test_error
+print "hc_test_error", hc_test_error
