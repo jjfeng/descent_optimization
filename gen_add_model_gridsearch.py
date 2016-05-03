@@ -23,6 +23,7 @@ def run(y_train, y_validate, X_full, train_idx, validate_idx, num_lambdas=10, ma
     for l in lambda_guesses:
         regularization = [l] * num_features
         thetas = problem_wrapper.solve(regularization)
+        print problem_wrapper.get_cost_components()
         current_cost = testerror_multi_smooth(y_validate, validate_idx, thetas)
         if best_cost > current_cost:
             best_cost = current_cost

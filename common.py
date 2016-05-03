@@ -1,7 +1,7 @@
 import numpy as np
 
 TRAIN_TO_VALIDATE_RATIO = 4
-TEST_SIZE = 2 # 200
+TEST_SIZE = 3 # 80 # 200
 
 # verbosity of convex optimization solver
 VERBOSE = False
@@ -75,8 +75,8 @@ def testerror_multi_smooth(y, test_indices, thetas):
     # print "thetas", thetas
     # print np.sum(thetas[test_indices], axis=1)
     # print "np.sum(thetas[test_indices], axis=1)", np.sum(thetas[test_indices], axis=1).shape
-    err = np.linalg.norm(y - np.sum(thetas[test_indices], axis=1))
-    return 0.5 * err**2
+    err = y - np.sum(thetas[test_indices], axis=1)
+    return 0.5/y.size * get_norm2(err, power=2)
 
 def betaerror(beta_real, beta_guess):
     return np.linalg.norm(beta_real - beta_guess)
@@ -85,7 +85,7 @@ def get_nonzero_indices(some_vector, threshold=CLOSE_TO_ZERO_THRESHOLD):
     return np.reshape(np.array(np.greater(np.abs(some_vector), threshold).T), (some_vector.size, ))
 
 def get_norm2(vector, power=1):
-    return np.power(np.linalg.norm(vector, ord=2), power)
+    return np.power(np.linalg.norm(vector, ord=None), power)
 
 #### RANDOM TESTS
 
