@@ -426,12 +426,14 @@ class GenAddModelProblemWrapper:
     def __init__(self, X, train_indices, y, tiny_e=1e-10):
         self.tiny_e = tiny_e
 
+        self.y = y
+
         num_samples, num_features = X.shape
         self.num_samples = num_samples
         self.num_features = num_features
 
         # Create smooth penalty matrix for each feature
-        self.diff_matrices = [0] * num_features
+        self.diff_matrices = []
         for i in range(num_features):
             x_features = X[:,i]
             d1_matrix = np.zeros((num_samples, num_samples))
@@ -440,59 +442,64 @@ class GenAddModelProblemWrapper:
             ordered_x = x_features[sample_ordering]
             d1_matrix[range(num_samples - 1), sample_ordering[:-1]] = -1
             d1_matrix[range(num_samples - 1), sample_ordering[1:]] = 1
-            print "sample_ordering", sample_ordering
-            print "d1_matrix", d1_matrix
             inv_dists = 1.0 / (ordered_x[np.arange(1, num_samples)] - ordered_x[np.arange(num_samples - 1)])
             inv_dists = np.append(inv_dists, 0)
-            print "inv_dists", inv_dists
 
             # Check that the inverted distances are all greater than zero
             assert(np.min(inv_dists) >= 0)
+            D = d1_matrix * np.matrix(np.diagflat(inv_dists)) * d1_matrix
+            self.diff_matrices.append(D)
 
-            self.diff_matrices[i] = (
-                d1_matrix * np.matrix(np.diagflat(inv_dists)) * d1_matrix
-            )
-
+        self.train_indices = train_indices
         self.train_identifier = np.matrix(np.zeros((len(train_indices), num_samples)))
-        num_train = len(train_indices)
-        self.train_identifier[np.arange(num_train), train_indices] = 1
-
-        self.y = y
-        self.thetas = Variable(num_samples, num_features)
-        self.lambdas = [Parameter(sign="positive")] * num_features
-        print "num_train", num_train
-        print "num_samples", num_samples
-        objective = 0.5/num_train * sum_squares(y - self.train_identifier * sum_entries(self.thetas, axis=1))
-        for i in range(num_features):
-            D = sp.sparse.coo_matrix(self.diff_matrices[i])
-            D_sparse = cvxopt.spmatrix(D.data, D.row.tolist(), D.col.tolist())
-            objective += 0.5/num_samples * self.lambdas[i] * sum_squares(D_sparse * self.thetas[:,i])
-        objective += 0.5 * self.tiny_e/(num_features * num_samples) * sum_squares(self.thetas)
-
-        self.problem = Problem(Minimize(objective), [])
+        self.num_train = len(train_indices)
+        self.train_identifier[np.arange(self.num_train), train_indices] = 1
 
     def solve(self, lambdas):
-        print "cvxpy solving... lambdas", lambdas
-        for i in range(0, len(lambdas)):
-            self.lambdas[i].value = lambdas[i]
+        thetas = Variable(self.num_samples, self.num_features)
+        lambdas = [Parameter(sign="positive", value=l) for l in lambdas]
+        objective = 0.5/self.num_train * sum_squares(self.y - sum_entries(thetas[self.train_indices,:], axis=1))
+        for i in range(len(lambdas)):
+            D = sp.sparse.coo_matrix(self.diff_matrices[i])
+            D_sparse = cvxopt.spmatrix(D.data, D.row.tolist(), D.col.tolist())
+            objective += 0.5/self.num_samples * lambdas[i] * sum_squares(D_sparse * thetas[:,i])
+        objective += 0.5 * self.tiny_e/(self.num_features * self.num_samples) * sum_squares(thetas)
+        self.problem = Problem(Minimize(objective))
+        self.problem.solve()
+        # print "basic problem.value", self.problem.value
+        # print "self.thetas", thetas
+        # print get_norm2(self.diff_matrices[0] * thetas.value)
+        # print ".5/self.num_samples * lam * get_norm2(D * theta, power=2)", .5/self.num_samples * lambdas[0].value * get_norm2(self.diff_matrices[0] * thetas.value, power=2)
 
-        result = self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=SCS_MAX_ITERS) #, use_indirect=False, normalize=True)
-        print "self.problem.status", self.problem.status
-        return self.thetas.value
+        print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
+        self.lambdas = lambdas
+        self.thetas = thetas.value
+        return thetas.value
 
     def get_cost_components(self):
         total_train_cost = self.problem.value
         num_train = self.y.size
+        print "num_train", num_train
+        print "self.num_samples", self.num_samples
+        print "self.thetas.value", self.thetas
         train_loss = 0.5/num_train * get_norm2(
-            self.y - self.train_identifier * np.sum(self.thetas.value, axis=1)
+            self.y - self.train_identifier * np.sum(self.thetas, axis=1),
+            power=2
         )
         penalties = []
         for i in range(self.num_features):
-            theta = self.thetas.value[:,i]
+            theta = np.matrix(self.thetas[:,i])
             lam = self.lambdas[i].value
             D = self.diff_matrices[i]
             penalties.append(
                 .5/self.num_samples * lam * get_norm2(D * theta, power=2)
             )
-        tiny_e_cost = 0.5 * self.tiny_e/(self.num_features * self.num_samples) * get_norm2(self.thetas.value, power=2)
+        tiny_e_cost = 0.5 * self.tiny_e/(self.num_features * self.num_samples) * get_norm2(self.thetas, power=2)
+        print "cost_components:"
+        print "tot", total_train_cost
+        print "t", train_loss
+        print "p", penalties
+        print "e", tiny_e_cost
+        print "diff", np.abs(total_train_cost - train_loss - sum(penalties) - tiny_e_cost)
+        assert(np.abs(total_train_cost - train_loss - sum(penalties) - tiny_e_cost) < 0.05)
         return total_train_cost, train_loss, penalties, tiny_e_cost

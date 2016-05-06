@@ -1,7 +1,7 @@
 import numpy as np
 
 TRAIN_TO_VALIDATE_RATIO = 4
-TEST_SIZE = 3 # 80 # 200
+TEST_SIZE = 200
 
 # verbosity of convex optimization solver
 VERBOSE = False
@@ -85,6 +85,8 @@ def get_nonzero_indices(some_vector, threshold=CLOSE_TO_ZERO_THRESHOLD):
     return np.reshape(np.array(np.greater(np.abs(some_vector), threshold).T), (some_vector.size, ))
 
 def get_norm2(vector, power=1):
+    # print "vector", vector
+    # print "vector", vector.shape
     return np.power(np.linalg.norm(vector, ord=None), power)
 
 #### RANDOM TESTS
