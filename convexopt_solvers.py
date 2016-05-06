@@ -465,7 +465,7 @@ class GenAddModelProblemWrapper:
             objective += 0.5/self.num_samples * lambdas[i] * sum_squares(D_sparse * thetas[:,i])
         objective += 0.5 * self.tiny_e/(self.num_features * self.num_samples) * sum_squares(thetas)
         self.problem = Problem(Minimize(objective))
-        self.problem.solve()
+        self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=SCS_MAX_ITERS)
         # print "basic problem.value", self.problem.value
         # print "self.thetas", thetas
         # print get_norm2(self.diff_matrices[0] * thetas.value)

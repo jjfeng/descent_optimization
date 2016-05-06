@@ -4,7 +4,7 @@ import numpy as np
 from common import *
 from convexopt_solvers import GenAddModelProblemWrapper
 
-LAMBDA_MIN_FACTOR = 1e-8
+LAMBDA_MIN_FACTOR = 1e-4
 
 def run(y_train, y_validate, X_full, train_idx, validate_idx, num_lambdas=10, max_lambda=100):
     max_power = np.log(max_lambda)

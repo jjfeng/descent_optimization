@@ -7,15 +7,15 @@ from common import *
 from convexopt_solvers import GenAddModelProblemWrapper
 
 class GenAddModelHillclimb:
-    NUMBER_OF_ITERATIONS = 30 # 60
+    NUMBER_OF_ITERATIONS = 30 #60
     BOUNDARY_FACTOR = 0.8
-    STEP_SIZE = 1 # 0.5
+    STEP_SIZE = 1
     LAMBDA_MIN = 1e-6
-    SHRINK_MIN = 1e-3 # 1e-15
+    SHRINK_MIN = 1e-3
     METHOD_STEP_SIZE_MIN = 1e-32
     SHRINK_SHRINK_FACTOR = 0.1
     SHRINK_FACTOR_INIT = 1
-    DECREASING_ENOUGH_THRESHOLD = 1e-4
+    DECREASING_ENOUGH_THRESHOLD = 1e-1
     METHOD_LABEL = "HC_Generalized_additive_model"
 
     def __init__(self, X_train, y_train, X_validate, y_validate, X_test):
@@ -150,7 +150,7 @@ class GenAddModelHillclimb:
         # print sp.linalg.block_diag(*[
         #     curr_lambdas[i] * self.DD[i] for i in range(self.num_features)
         # ])
-        # H = sp.sparse.csr_matrix(H)
+        H = sp.sparse.csr_matrix(H)
 
         sum_thetas = np.matrix(np.sum(curr_thetas, axis=1))
         dloss_dlambdas = []
@@ -161,9 +161,9 @@ class GenAddModelHillclimb:
             b[i * self.num_samples:(i + 1) * self.num_samples, :] = -self.DD[i] * curr_thetas[:,i]
             # print "b", b
             # dtheta_dlambdai = sp.linalg.solve(H, b, sym_pos=True)
-            dtheta_dlambdai = np.linalg.solve(H, b)
+            # dtheta_dlambdai = np.linalg.solve(H, b)
             # dtheta_dlambdai, _, _, _ = np.linalg.lstsq(H, b)
-            # dtheta_dlambdai = spsolve(H, b)
+            dtheta_dlambdai = spsolve(H, b)
             # print "dtheta_dlambdai", dtheta_dlambdai
             dtheta_dlambdai = dtheta_dlambdai.reshape((self.num_features, self.num_samples)).T
             # print "dtheta_dlambdai reshaped", dtheta_dlambdai
