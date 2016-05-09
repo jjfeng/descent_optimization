@@ -15,28 +15,28 @@ from common import *
 np.set_printoptions(edgeitems=3, infstr='inf', linewidth=200, nanstr='nan', precision=8, suppress=False, threshold=1000, formatter=None)
 
 ##########
-np.random.seed(1)
+np.random.seed(8)
 FEATURE_RANGE = [-10.0, 10.0]
 
-# NUM_RUNS = 30
-# NUM_FUNCS = 3
-# TRAIN_SIZE = 80
-# SNR = 1
-# VALIDATE_RATIO = 4
-# NUM_TEST = 40 #15
-# NUM_GS_LAMBDAS = 4
-# MAX_LAMBDA = 30
-# TEST_HC_LAMBDAS = [0.1, 10]
-
-NUM_RUNS = 10
-NUM_FUNCS = 2
-TRAIN_SIZE = 50
-SNR = 1
-VALIDATE_RATIO = 2
-NUM_TEST = 30
+NUM_RUNS = 1
+NUM_FUNCS = 3
+TRAIN_SIZE = 180
+SNR = 2
+VALIDATE_RATIO = 3
+NUM_TEST = 60
 NUM_GS_LAMBDAS = 4
-MAX_LAMBDA = 30
-TEST_HC_LAMBDAS = [0.1, 1]
+MAX_LAMBDA = 50
+TEST_HC_LAMBDAS = [0.1, 5]
+
+# NUM_RUNS = 10
+# NUM_FUNCS = 2
+# TRAIN_SIZE = 120
+# SNR = 2
+# VALIDATE_RATIO = 3
+# NUM_TEST = 35
+# NUM_GS_LAMBDAS = 4
+# MAX_LAMBDA = 50
+# TEST_HC_LAMBDAS = [1]
 
 # NUM_RUNS = 3
 # NUM_FUNCS = 4
@@ -56,10 +56,10 @@ def identity_fcn(x):
     return x.reshape(x.size, 1)
 
 def big_sin(x):
-    return identity_fcn(5 * np.sin(x/2))
+    return identity_fcn(5 * np.sin(x*3))
 
 def crazy_down_sin(x):
-    return identity_fcn(x * np.sin(np.power(x * 2, 2)) - x - 1)
+    return identity_fcn(x * np.sin(x) - x)
 
 def exp_small(x):
     return identity_fcn(np.exp(x * 0.6) - 8)
@@ -149,7 +149,6 @@ def plot_res(fitted_thetas, fcn_list, X, y, outfile="figures/threegam/out.png", 
     plt.savefig(out_y_file)
 
 
-#### Note: there seems to be an identifiability issue
 def main():
     SMOOTH_FCNS = [big_sin, identity_fcn, crazy_down_sin, exp_small, log_func]
     smooth_fcn_list = SMOOTH_FCNS[:NUM_FUNCS]

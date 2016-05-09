@@ -7,16 +7,16 @@ from common import *
 from convexopt_solvers import GenAddModelProblemWrapper
 
 class GenAddModelHillclimb:
-    NUMBER_OF_ITERATIONS = 30 #60
-    BOUNDARY_FACTOR = 0.8
+    NUMBER_OF_ITERATIONS = 20 #60
+    BOUNDARY_FACTOR = 0.975
     STEP_SIZE = 1
     LAMBDA_MIN = 1e-6
-    SHRINK_MIN = 1e-3
-    METHOD_STEP_SIZE_MIN = 1e-32
+    SHRINK_MIN = 1e-2
     SHRINK_SHRINK_FACTOR = 0.1
     SHRINK_FACTOR_INIT = 1
-    DECREASING_ENOUGH_THRESHOLD = 1e-1
+    DECREASING_ENOUGH_THRESHOLD = 1e-2 * 5
     METHOD_LABEL = "HC_Generalized_additive_model"
+    USE_BOUNDARY = True
 
     def __init__(self, X_train, y_train, X_validate, y_validate, X_test):
         self.X_train = X_train
@@ -60,9 +60,9 @@ class GenAddModelHillclimb:
         potential_thetas = None
         for i in range(0, self.NUMBER_OF_ITERATIONS):
             print "ITER", i
-            print "get_cost_components", self.problem_wrapper.get_cost_components()
             lambda_derivatives = self._get_lambda_derivatives(curr_regularization, thetas)
             if debug and np.min(curr_regularization) > 0.01:
+                print "get_cost_components", self.problem_wrapper.get_cost_components()
                 check_derivs = self._double_check_derivative(curr_regularization)
                 print "lambda_derivatives", lambda_derivatives
                 print "numeric derivs", check_derivs
@@ -147,13 +147,17 @@ class GenAddModelHillclimb:
         H += sp.linalg.block_diag(*[
             curr_lambdas[i] * self.DD[i] for i in range(self.num_features)
         ])
-        # num_train = self.y_train.size
+        num_train = self.y_train.size
         # print "num_train", num_train
         # print "np.sum(curr_thetas, axis=1)", np.sum(curr_thetas, axis=1)
         # print "curr_lambdas[0] * self.DD[0] * curr_thetas[:,0]", curr_lambdas[0] * self.DD[0] * curr_thetas[:,0]
         # print "-self.M.T/num_train * (self.y_train - self.M * np.sum(curr_thetas, axis=1))", -self.M.T/num_train * (self.y_train - self.M * np.sum(curr_thetas, axis=1))
         # print "-self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1))", -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1))
-        # print "zero?", -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1)) + curr_lambdas[0] * self.DD[0] * curr_thetas[:,0] + self.problem_wrapper.tiny_e/num_feat_sam * curr_thetas[:,0]
+        true_grads = []
+        for i in range(self.num_features):
+            true_g = -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1)) + curr_lambdas[0] * self.DD[0] * curr_thetas[:,0] + self.problem_wrapper.tiny_e/num_feat_sam * curr_thetas[:,i]
+            true_grads.append(true_g)
+            print "zero?", np.max(np.abs(true_g)), np.min(np.abs(true_g)), np.linalg.norm(true_g, ord=2)
 
         # print "H", H
         # print "curr_lambdas", curr_lambdas
@@ -194,9 +198,9 @@ class GenAddModelHillclimb:
         print "dloss_dlambdas", dloss_dlambdas
         return np.array(dloss_dlambdas)
 
-    def _get_updated_lambdas(self, lambdas, method_step_size, lambda_derivatives, use_boundary=False):
+    def _get_updated_lambdas(self, lambdas, method_step_size, lambda_derivatives):
         new_step_size = method_step_size
-        if use_boundary:
+        if self.USE_BOUNDARY:
             print "use_boundary!"
             potential_lambdas = lambdas - method_step_size * lambda_derivatives
 
