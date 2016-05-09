@@ -15,8 +15,8 @@ from common import *
 np.set_printoptions(edgeitems=3, infstr='inf', linewidth=200, nanstr='nan', precision=8, suppress=False, threshold=1000, formatter=None)
 
 ##########
-np.random.seed(3)
-FEATURE_RANGE = [0, 5]
+np.random.seed(1)
+FEATURE_RANGE = [-10.0, 10.0]
 
 # NUM_RUNS = 30
 # NUM_FUNCS = 3
@@ -28,44 +28,44 @@ FEATURE_RANGE = [0, 5]
 # MAX_LAMBDA = 30
 # TEST_HC_LAMBDAS = [0.1, 10]
 
-# NUM_RUNS = 20
-# NUM_FUNCS = 2
-# TRAIN_SIZE = 80
-# SNR = 1
-# VALIDATE_RATIO = 4
-# NUM_TEST = 15
-# NUM_GS_LAMBDAS = 4
-# MAX_LAMBDA = 30
-# TEST_HC_LAMBDAS = [0.1, 10]
-
-NUM_RUNS = 3
-NUM_FUNCS = 4
-TRAIN_SIZE = 120
+NUM_RUNS = 10
+NUM_FUNCS = 2
+TRAIN_SIZE = 50
 SNR = 1
-VALIDATE_RATIO = 4
-NUM_TEST = 40
+VALIDATE_RATIO = 2
+NUM_TEST = 30
 NUM_GS_LAMBDAS = 4
 MAX_LAMBDA = 30
-TEST_HC_LAMBDAS = [0.1, 1, 10]
+TEST_HC_LAMBDAS = [0.1, 1]
+
+# NUM_RUNS = 3
+# NUM_FUNCS = 4
+# TRAIN_SIZE = 120
+# SNR = 1
+# VALIDATE_RATIO = 4
+# NUM_TEST = 40
+# NUM_GS_LAMBDAS = 4
+# MAX_LAMBDA = 30
+# TEST_HC_LAMBDAS = [0.1, 1, 10]
 
 
 DEBUG = False
 PLOT_RUNS = True
 
 def identity_fcn(x):
-    return x.reshape(x.size, 1) + 1
+    return x.reshape(x.size, 1)
 
 def big_sin(x):
-    return 5 * np.sin(x)
+    return identity_fcn(5 * np.sin(x/2))
 
 def crazy_down_sin(x):
-    return x * np.sin(np.power(x * 2, 2)) - x - 1
+    return identity_fcn(x * np.sin(np.power(x * 2, 2)) - x - 1)
 
 def exp_small(x):
-    return np.exp(x * 0.6) - 8
+    return identity_fcn(np.exp(x * 0.6) - 8)
 
 def log_func(x):
-    return np.log(x) * 5 + 10
+    return identity_fcn(np.log(x) * 5 + 10)
 
 def _hillclimb_coarse_grid_search(X_train, y_train, X_validate, y_validate, X_test, smooth_fcn_list):
     start_time = time.time()
@@ -94,6 +94,7 @@ def _hillclimb_coarse_grid_search(X_train, y_train, X_validate, y_validate, X_te
 
 def plot_res(fitted_thetas, fcn_list, X, y, outfile="figures/threegam/out.png", out_y_file="figures/threegam/out_y.png"):
     colors = ["green", "blue", "red", "purple", "orange", "black", "brown"]
+    print "outfile", outfile
     num_features = fitted_thetas.shape[1]
     plt.clf()
     for i in range(num_features):
@@ -112,19 +113,45 @@ def plot_res(fitted_thetas, fcn_list, X, y, outfile="figures/threegam/out.png", 
         )
     plt.savefig(outfile)
 
+    # plt.clf()
+    # fitted_y = np.sum(fitted_thetas, axis=1)
+    # plt.plot(y, fitted_y, '.')
+    # all_ys = np.vstack((y, np.sum(fitted_thetas, axis=1)))
+    # feat_range = [np.min(all_ys) - 1, np.max(all_ys) + 1]
+    # plt.plot(feat_range, feat_range, 'k-')
+    # plt.plot()
+    # plt.savefig(out_y_file)
+
     plt.clf()
     fitted_y = np.sum(fitted_thetas, axis=1)
-    plt.plot(y, fitted_y, '.')
-    all_ys = np.vstack((y, np.sum(fitted_thetas, axis=1)))
-    feat_range = [np.min(all_ys) - 1, np.max(all_ys) + 1]
-    plt.plot(feat_range, feat_range, 'k-')
-    plt.plot()
+    true_y = 0
+    for i in range(num_features):
+        fcn = fcn_list[i]
+        print fcn(X[:,i]).shape
+        true_y += fcn(X[:,i])
+
+    for i in range(num_features):
+        x_features = X[:,i]
+        fcn = fcn_list[i]
+        order_x = np.argsort(x_features)
+        plt.plot(
+            x_features[order_x],
+            true_y[order_x], # true values
+            '-',
+            x_features[order_x], # observed x
+            fitted_y[order_x], # fitted y
+            '--',
+            x_features[order_x], # observed x
+            y[order_x], # observed values
+            '-.',
+            color=colors[i],
+        )
     plt.savefig(out_y_file)
 
 
 #### Note: there seems to be an identifiability issue
 def main():
-    SMOOTH_FCNS = [np.sin, big_sin, crazy_down_sin, exp_small, log_func]
+    SMOOTH_FCNS = [big_sin, identity_fcn, crazy_down_sin, exp_small, log_func]
     smooth_fcn_list = SMOOTH_FCNS[:NUM_FUNCS]
 
     hc_results = MethodResults("Hillclimb")
@@ -154,6 +181,16 @@ def main():
                 hc_thetas[test_idx], smooth_fcn_list, X_test, y_test,
                 outfile="figures/threegam/out_hc_f%d.png" % NUM_FUNCS,
                 out_y_file="figures/threegam/out_y_hc_f%d.png" % NUM_FUNCS,
+            )
+            plot_res(
+                hc_thetas[validate_idx], smooth_fcn_list, X_validate, y_validate,
+                outfile="figures/threegam/out_hcv_f%d.png" % NUM_FUNCS,
+                out_y_file="figures/threegam/out_yv_hc_f%d.png" % NUM_FUNCS,
+            )
+            plot_res(
+                hc_thetas[train_idx], smooth_fcn_list, X_train, y_train,
+                outfile="figures/threegam/out_hct_f%d.png" % NUM_FUNCS,
+                out_y_file="figures/threegam/out_yt_hc_f%d.png" % NUM_FUNCS,
             )
 
         print "=================================================="

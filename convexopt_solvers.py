@@ -3,7 +3,7 @@ import cvxopt
 from common import *
 import scipy as sp
 
-SCS_MAX_ITERS = 10000
+SCS_MAX_ITERS = 50000 #10000
 REALDATA_MAX_ITERS = 4000
 
 # Objective function: 0.5 * norm(y - Xb)^2 + lambda1 * lasso + 0.5 * lambda2 * ridge
@@ -423,7 +423,7 @@ class SmoothAndLinearProblemWrapperSimple:
 # min 0.5 * |y - train_identifiers * theta|^2 + 0.5 * sum (lambda_j * |D_j * theta_j|^2) + e * sum (|theta_j|^2)
 # We have three features, want a smooth fit
 class GenAddModelProblemWrapper:
-    def __init__(self, X, train_indices, y, tiny_e=1e-10):
+    def __init__(self, X, train_indices, y, tiny_e=0):
         self.tiny_e = tiny_e
 
         self.y = y
@@ -457,7 +457,6 @@ class GenAddModelProblemWrapper:
 
     def solve(self, lambdas):
         thetas = Variable(self.num_samples, self.num_features)
-        lambdas = [Parameter(sign="positive", value=l) for l in lambdas]
         objective = 0.5/self.num_train * sum_squares(self.y - sum_entries(thetas[self.train_indices,:], axis=1))
         for i in range(len(lambdas)):
             D = sp.sparse.coo_matrix(self.diff_matrices[i])
@@ -465,11 +464,7 @@ class GenAddModelProblemWrapper:
             objective += 0.5/self.num_samples * lambdas[i] * sum_squares(D_sparse * thetas[:,i])
         objective += 0.5 * self.tiny_e/(self.num_features * self.num_samples) * sum_squares(thetas)
         self.problem = Problem(Minimize(objective))
-        self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=SCS_MAX_ITERS)
-        # print "basic problem.value", self.problem.value
-        # print "self.thetas", thetas
-        # print get_norm2(self.diff_matrices[0] * thetas.value)
-        # print ".5/self.num_samples * lam * get_norm2(D * theta, power=2)", .5/self.num_samples * lambdas[0].value * get_norm2(self.diff_matrices[0] * thetas.value, power=2)
+        self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=SCS_MAX_ITERS, normalize=False, use_indirect=False, eps=1e-8, warm_start=True)
 
         print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
         self.lambdas = lambdas
@@ -479,17 +474,16 @@ class GenAddModelProblemWrapper:
     def get_cost_components(self):
         total_train_cost = self.problem.value
         num_train = self.y.size
-        print "num_train", num_train
-        print "self.num_samples", self.num_samples
-        print "self.thetas.value", self.thetas
+
         train_loss = 0.5/num_train * get_norm2(
-            self.y - self.train_identifier * np.sum(self.thetas, axis=1),
+            # self.y - self.train_identifier * np.sum(self.thetas, axis=1),
+            self.y - np.sum(self.thetas[self.train_indices,:], axis=1),
             power=2
         )
         penalties = []
         for i in range(self.num_features):
             theta = np.matrix(self.thetas[:,i])
-            lam = self.lambdas[i].value
+            lam = self.lambdas[i]
             D = self.diff_matrices[i]
             penalties.append(
                 .5/self.num_samples * lam * get_norm2(D * theta, power=2)
@@ -501,5 +495,7 @@ class GenAddModelProblemWrapper:
         print "p", penalties
         print "e", tiny_e_cost
         print "diff", np.abs(total_train_cost - train_loss - sum(penalties) - tiny_e_cost)
-        assert(np.abs(total_train_cost - train_loss - sum(penalties) - tiny_e_cost) < 0.05)
+        # assert(np.abs(total_train_cost - train_loss - sum(penalties) - tiny_e_cost)/total_train_cost < 0.05)
+        # print "diff", np.abs(total_train_cost - train_loss - sum(penalties))
+        # assert(np.abs(total_train_cost - train_loss - sum(penalties)) < 0.05)
         return total_train_cost, train_loss, penalties, tiny_e_cost

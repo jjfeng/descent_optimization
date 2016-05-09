@@ -30,6 +30,7 @@ class GenAddModelHillclimb:
         self.num_samples = self.problem_wrapper.num_samples
         self.num_features = self.problem_wrapper.num_features
 
+        self.train_indices = self.problem_wrapper.train_indices
         self.M = self.problem_wrapper.train_identifier
         num_validate = len(self.validate_idx)
         num_train = len(self.train_idx)
@@ -59,16 +60,17 @@ class GenAddModelHillclimb:
         potential_thetas = None
         for i in range(0, self.NUMBER_OF_ITERATIONS):
             print "ITER", i
-            # print "get_cost_components", self.problem_wrapper.get_cost_components()
+            print "get_cost_components", self.problem_wrapper.get_cost_components()
             lambda_derivatives = self._get_lambda_derivatives(curr_regularization, thetas)
-            if debug:
+            if debug and np.min(curr_regularization) > 0.01:
                 check_derivs = self._double_check_derivative(curr_regularization)
                 print "lambda_derivatives", lambda_derivatives
                 print "numeric derivs", check_derivs
                 for j, check_d in enumerate(check_derivs):
                     print "lambda_derivatives", lambda_derivatives[j]
                     print "numeric_deriv", check_d
-                    assert(np.abs(check_d - lambda_derivatives[j]) < 0.005)
+                    print "np.abs(check_d - lambda_derivatives[j])/np.abs(check_d)", np.abs(check_d - lambda_derivatives[j])/np.abs(check_d)
+                    assert(np.abs(check_d - lambda_derivatives[j]) < 0.1 or np.abs(check_d - lambda_derivatives[j])/np.abs(check_d) < 0.1)
             assert(not np.any(np.isnan(lambda_derivatives)))
 
             potential_new_regularization = self._get_updated_lambdas(
@@ -137,12 +139,23 @@ class GenAddModelHillclimb:
         print "_get_lambda_derivatives, curr_lambdas", curr_lambdas
         H = np.tile(self.MM, (self.num_features, self.num_features))
         num_feat_sam = self.num_features * self.num_samples
-        H += self.problem_wrapper.tiny_e/num_feat_sam * np.eye(num_feat_sam)
+        # print "self.problem_wrapper.tiny_e/num_feat_sam", self.problem_wrapper.tiny_e/num_feat_sam
+        # H += self.problem_wrapper.tiny_e/num_feat_sam * np.eye(num_feat_sam)
+        # print "H", H
         # print "curr_lambdas[i] * self.DD[i]", curr_lambdas[0] * self.DD[0]
         # print "sp.linalg.block_diag", sp.linalg.block_diag(*[curr_lambdas[i] * self.DD[i] for i in range(self.num_features)])
         H += sp.linalg.block_diag(*[
             curr_lambdas[i] * self.DD[i] for i in range(self.num_features)
         ])
+        # num_train = self.y_train.size
+        # print "num_train", num_train
+        # print "np.sum(curr_thetas, axis=1)", np.sum(curr_thetas, axis=1)
+        # print "curr_lambdas[0] * self.DD[0] * curr_thetas[:,0]", curr_lambdas[0] * self.DD[0] * curr_thetas[:,0]
+        # print "-self.M.T/num_train * (self.y_train - self.M * np.sum(curr_thetas, axis=1))", -self.M.T/num_train * (self.y_train - self.M * np.sum(curr_thetas, axis=1))
+        # print "-self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1))", -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1))
+        # print "zero?", -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1)) + curr_lambdas[0] * self.DD[0] * curr_thetas[:,0] + self.problem_wrapper.tiny_e/num_feat_sam * curr_thetas[:,0]
+
+        # print "H", H
         # print "curr_lambdas", curr_lambdas
         # print "self.DD[0]", self.DD[0]
         # print "0: curr_lambdas * DD", curr_lambdas[0] * self.DD[0]
@@ -159,6 +172,7 @@ class GenAddModelHillclimb:
             # print "=========I======", i
             b = np.zeros((num_feat_sam, 1))
             b[i * self.num_samples:(i + 1) * self.num_samples, :] = -self.DD[i] * curr_thetas[:,i]
+            # print "-self.DD[i] * curr_thetas[:,i]", -self.DD[i] * curr_thetas[:,i]
             # print "b", b
             # dtheta_dlambdai = sp.linalg.solve(H, b, sym_pos=True)
             # dtheta_dlambdai = np.linalg.solve(H, b)
@@ -176,7 +190,6 @@ class GenAddModelHillclimb:
             dloss_dlambdai = -1.0/num_validate * sum_dtheta_dlambdai[self.validate_idx].T * (self.y_validate - sum_thetas[self.validate_idx])
             # print "dloss_dlambdai", dloss_dlambdai
             dloss_dlambdas.append(dloss_dlambdai[0,0])
-            # break
 
         print "dloss_dlambdas", dloss_dlambdas
         return np.array(dloss_dlambdas)
@@ -194,7 +207,7 @@ class GenAddModelHillclimb:
 
         return np.maximum(lambdas - new_step_size * lambda_derivatives, self.LAMBDA_MIN)
 
-    def _double_check_derivative(self, regularization, epsilon=0.0001):
+    def _double_check_derivative(self, regularization, epsilon=1e-7):
         print "double_check_derivative"
         deriv = []
         for i in range(len(regularization)):
