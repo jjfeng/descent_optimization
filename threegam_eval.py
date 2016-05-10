@@ -15,18 +15,18 @@ from common import *
 np.set_printoptions(edgeitems=3, infstr='inf', linewidth=200, nanstr='nan', precision=8, suppress=False, threshold=1000, formatter=None)
 
 ##########
-np.random.seed(8)
+np.random.seed(10)
 FEATURE_RANGE = [-10.0, 10.0]
 
-NUM_RUNS = 1
+NUM_RUNS = 10
 NUM_FUNCS = 3
-TRAIN_SIZE = 180
+TRAIN_SIZE = 150
 SNR = 2
 VALIDATE_RATIO = 3
 NUM_TEST = 60
 NUM_GS_LAMBDAS = 4
 MAX_LAMBDA = 50
-TEST_HC_LAMBDAS = [0.1, 5]
+TEST_HC_LAMBDAS = [5]
 
 # NUM_RUNS = 10
 # NUM_FUNCS = 2

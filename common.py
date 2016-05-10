@@ -71,10 +71,6 @@ def testerror_smooth_and_linear(X_linear, y, beta, thetas):
     return 0.5 * np.linalg.norm(err)
 
 def testerror_multi_smooth(y, test_indices, thetas):
-    # print "[test_indices]", test_indices
-    # print "thetas", thetas
-    # print np.sum(thetas[test_indices], axis=1)
-    # print "np.sum(thetas[test_indices], axis=1)", np.sum(thetas[test_indices], axis=1).shape
     err = y - np.sum(thetas[test_indices], axis=1)
     return 0.5/y.size * get_norm2(err, power=2)
 
@@ -85,8 +81,6 @@ def get_nonzero_indices(some_vector, threshold=CLOSE_TO_ZERO_THRESHOLD):
     return np.reshape(np.array(np.greater(np.abs(some_vector), threshold).T), (some_vector.size, ))
 
 def get_norm2(vector, power=1):
-    # print "vector", vector
-    # print "vector", vector.shape
     return np.power(np.linalg.norm(vector, ord=None), power)
 
 #### RANDOM TESTS

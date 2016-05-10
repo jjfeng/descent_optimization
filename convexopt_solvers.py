@@ -4,7 +4,7 @@ from common import *
 import scipy as sp
 
 SCS_MAX_ITERS = 10000
-SCS_HIGH_ACC_MAX_ITERS = SCS_MAX_ITERS * 10
+SCS_HIGH_ACC_MAX_ITERS = SCS_MAX_ITERS * 8
 SCS_EPS = 1e-3 # default eps
 SCS_HIGH_ACC_EPS = 1e-8
 REALDATA_MAX_ITERS = 4000
@@ -428,7 +428,6 @@ class SmoothAndLinearProblemWrapperSimple:
 class GenAddModelProblemWrapper:
     def __init__(self, X, train_indices, y, tiny_e=0):
         self.tiny_e = tiny_e
-
         self.y = y
 
         num_samples, num_features = X.shape
@@ -458,6 +457,9 @@ class GenAddModelProblemWrapper:
         self.num_train = len(train_indices)
         self.train_identifier[np.arange(self.num_train), train_indices] = 1
 
+    # @param high_accur: for gradient descent on the validation errors, getting the optimal solution is super important.
+    # We need it in order to have an accurate gradient for validation loss wrt lambdas
+    # as dimension of the solution vector increases, the number of iterations of SCS is necessary!
     def solve(self, lambdas, high_accur=True):
         thetas = Variable(self.num_samples, self.num_features)
         objective = 0.5/self.num_train * sum_squares(self.y - sum_entries(thetas[self.train_indices,:], axis=1))

@@ -9,7 +9,7 @@ from convexopt_solvers import GenAddModelProblemWrapper
 class GenAddModelHillclimb:
     NUMBER_OF_ITERATIONS = 20 #60
     BOUNDARY_FACTOR = 0.975
-    STEP_SIZE = 1
+    STEP_SIZE = 2
     LAMBDA_MIN = 1e-6
     SHRINK_MIN = 1e-2
     SHRINK_SHRINK_FACTOR = 0.1
@@ -201,13 +201,13 @@ class GenAddModelHillclimb:
     def _get_updated_lambdas(self, lambdas, method_step_size, lambda_derivatives):
         new_step_size = method_step_size
         if self.USE_BOUNDARY:
-            print "use_boundary!"
             potential_lambdas = lambdas - method_step_size * lambda_derivatives
 
             for idx in range(0, lambdas.size):
                 if lambdas[idx] > self.LAMBDA_MIN and potential_lambdas[idx] < (1 - self.BOUNDARY_FACTOR) * lambdas[idx]:
                     smaller_step_size = self.BOUNDARY_FACTOR * lambdas[idx] / lambda_derivatives[idx]
                     new_step_size = min(new_step_size, smaller_step_size)
+                    print "use_boundary!", new_step_size
 
         return np.maximum(lambdas - new_step_size * lambda_derivatives, self.LAMBDA_MIN)
 
