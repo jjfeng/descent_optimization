@@ -1,4 +1,5 @@
 import time
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -12,10 +13,7 @@ import gen_add_model_gridsearch as gs
 
 from common import *
 
-np.set_printoptions(edgeitems=3, infstr='inf', linewidth=200, nanstr='nan', precision=8, suppress=False, threshold=1000, formatter=None)
-
-##########
-np.random.seed(10)
+np.random.seed(100)
 FEATURE_RANGE = [-10.0, 10.0]
 
 NUM_RUNS = 10
@@ -28,25 +26,25 @@ NUM_GS_LAMBDAS = 4
 MAX_LAMBDA = 50
 TEST_HC_LAMBDAS = [5]
 
-# NUM_RUNS = 10
+# NUM_RUNS = 30
 # NUM_FUNCS = 2
 # TRAIN_SIZE = 120
 # SNR = 2
 # VALIDATE_RATIO = 3
-# NUM_TEST = 35
-# NUM_GS_LAMBDAS = 4
-# MAX_LAMBDA = 50
-# TEST_HC_LAMBDAS = [1]
-
-# NUM_RUNS = 3
-# NUM_FUNCS = 4
-# TRAIN_SIZE = 120
-# SNR = 1
-# VALIDATE_RATIO = 4
 # NUM_TEST = 40
 # NUM_GS_LAMBDAS = 4
+# MAX_LAMBDA = 50
+# TEST_HC_LAMBDAS = [10]
+
+# NUM_RUNS = 1
+# NUM_FUNCS = 4
+# TRAIN_SIZE = 180
+# SNR = 2
+# VALIDATE_RATIO = 3
+# NUM_TEST = 70
+# NUM_GS_LAMBDAS = 4
 # MAX_LAMBDA = 30
-# TEST_HC_LAMBDAS = [0.1, 1, 10]
+# TEST_HC_LAMBDAS = [2]
 
 
 DEBUG = False
@@ -61,8 +59,8 @@ def big_sin(x):
 def crazy_down_sin(x):
     return identity_fcn(x * np.sin(x) - x)
 
-def exp_small(x):
-    return identity_fcn(np.exp(x * 0.6) - 8)
+def pwr_small(x):
+    return identity_fcn(np.power(x/2,2) - 10)
 
 def log_func(x):
     return identity_fcn(np.log(x) * 5 + 10)
@@ -77,7 +75,8 @@ def _hillclimb_coarse_grid_search(X_train, y_train, X_validate, y_validate, X_te
     for lam in TEST_HC_LAMBDAS:
         hc = GenAddModelHillclimb(X_train, y_train, X_validate, y_validate, X_test)
         init_lambdas = np.array([lam for i in range(len(smooth_fcn_list))])
-        thetas, cost_path, curr_regularization = hc.run(init_lambdas, debug=DEBUG)
+        # thetas, cost_path, curr_regularization = hc.run(init_lambdas, debug=DEBUG)
+        thetas, cost_path, curr_regularization = hc.run_nesterov(init_lambdas, debug=DEBUG)
 
         if thetas is not None and best_cost > cost_path[-1]:
             best_cost = cost_path[-1]
@@ -86,10 +85,12 @@ def _hillclimb_coarse_grid_search(X_train, y_train, X_validate, y_validate, X_te
             best_start_lambda = lam
             best_regularization = curr_regularization
             print "better cost", best_cost, "better regularization", best_regularization
+        sys.stdout.flush()
 
     print "HC: best_cost", best_cost, "best_regularization", best_regularization, "best start lambda: ", best_start_lambda
     end_time = time.time()
     print "runtime", end_time - start_time
+    print "best_cost_path", best_cost_path
     return best_thetas, best_cost_path, end_time - start_time
 
 def plot_res(fitted_thetas, fcn_list, X, y, outfile="figures/threegam/out.png", out_y_file="figures/threegam/out_y.png"):
@@ -112,15 +113,6 @@ def plot_res(fitted_thetas, fcn_list, X, y, outfile="figures/threegam/out.png", 
             color=colors[i],
         )
     plt.savefig(outfile)
-
-    # plt.clf()
-    # fitted_y = np.sum(fitted_thetas, axis=1)
-    # plt.plot(y, fitted_y, '.')
-    # all_ys = np.vstack((y, np.sum(fitted_thetas, axis=1)))
-    # feat_range = [np.min(all_ys) - 1, np.max(all_ys) + 1]
-    # plt.plot(feat_range, feat_range, 'k-')
-    # plt.plot()
-    # plt.savefig(out_y_file)
 
     plt.clf()
     fitted_y = np.sum(fitted_thetas, axis=1)
@@ -150,7 +142,7 @@ def plot_res(fitted_thetas, fcn_list, X, y, outfile="figures/threegam/out.png", 
 
 
 def main():
-    SMOOTH_FCNS = [big_sin, identity_fcn, crazy_down_sin, exp_small, log_func]
+    SMOOTH_FCNS = [big_sin, identity_fcn, crazy_down_sin, pwr_small]
     smooth_fcn_list = SMOOTH_FCNS[:NUM_FUNCS]
 
     hc_results = MethodResults("Hillclimb")
@@ -214,7 +206,7 @@ def main():
                 outfile="figures/threegam/out_gs_f%d.png" % NUM_FUNCS,
                 out_y_file="figures/threegam/out_y_gs_f%d.png" % NUM_FUNCS,
             )
-
+        print "===========RUN %d ============" % i
         hc_results.print_results()
         gs_results.print_results()
 

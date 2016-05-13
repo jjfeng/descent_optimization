@@ -7,16 +7,16 @@ from common import *
 from convexopt_solvers import GenAddModelProblemWrapper
 
 class GenAddModelHillclimb:
-    NUMBER_OF_ITERATIONS = 20 #60
-    BOUNDARY_FACTOR = 0.975
+    NUMBER_OF_ITERATIONS = 60
+    BOUNDARY_FACTOR = 0.95
     STEP_SIZE = 2
     LAMBDA_MIN = 1e-6
     SHRINK_MIN = 1e-2
     SHRINK_SHRINK_FACTOR = 0.1
     SHRINK_FACTOR_INIT = 1
-    DECREASING_ENOUGH_THRESHOLD = 1e-2 * 5
+    DECREASING_ENOUGH_THRESHOLD = 1e-4
     METHOD_LABEL = "HC_Generalized_additive_model"
-    USE_BOUNDARY = True
+    USE_BOUNDARY = False #True
 
     def __init__(self, X_train, y_train, X_validate, y_validate, X_test):
         self.X_train = X_train
@@ -43,13 +43,15 @@ class GenAddModelHillclimb:
             D = self.problem_wrapper.diff_matrices[feat_idx]
             self.DD.append(D.T * D/self.num_samples)
 
+        self.cost_fcn = testerror_multi_smooth
+
     def run(self, initial_lambdas, debug=True):
         curr_regularization = initial_lambdas
 
         thetas = self.problem_wrapper.solve(curr_regularization)
         assert(thetas is not None)
 
-        current_cost = testerror_multi_smooth(self.y_validate, self.validate_idx, thetas)
+        current_cost = self.cost_fcn(self.y_validate, self.validate_idx, thetas)
         print self.METHOD_LABEL, "first_regularization", curr_regularization, "first cost", current_cost
 
         # track progression
@@ -87,7 +89,7 @@ class GenAddModelHillclimb:
                 print "cvxpy could not find a soln"
                 potential_cost = current_cost * 100
             else:
-                potential_cost = testerror_multi_smooth(self.y_validate, self.validate_idx, potential_thetas)
+                potential_cost = self.cost_fcn(self.y_validate, self.validate_idx, potential_thetas)
 
             while potential_cost >= current_cost and shrink_factor > self.SHRINK_MIN:
                 if potential_cost > 2 * current_cost:
@@ -107,7 +109,7 @@ class GenAddModelHillclimb:
                     potential_cost = current_cost * 100
                     print "try shrink", shrink_factor, "no soln. oops!"
                 else:
-                    potential_cost = testerror_multi_smooth(self.y_validate, self.validate_idx, potential_thetas)
+                    potential_cost = self.cost_fcn(self.y_validate, self.validate_idx, potential_thetas)
                     print "try shrink", shrink_factor, "potential_cost", potential_cost
 
             # track progression
@@ -121,7 +123,7 @@ class GenAddModelHillclimb:
                 cost_path.append(current_cost)
 
                 print self.METHOD_LABEL, "iter:", i, "current_cost:", current_cost, "lambdas:", curr_regularization, "shrink_factor", shrink_factor
-
+                print "decrease amount", cost_path[-2] - cost_path[-1]
                 if cost_path[-2] - cost_path[-1] < self.DECREASING_ENOUGH_THRESHOLD:
                     print "progress too slow", cost_path[-2] - cost_path[-1]
                     break
@@ -135,64 +137,100 @@ class GenAddModelHillclimb:
 
         return thetas, cost_path, curr_regularization
 
+    def run_nesterov(self, initial_lambdas, debug=True):
+        def _get_accelerated_lambdas(curr_lambdas, prev_lambdas, iter_num):
+            print "orig", curr_lambdas
+            return np.maximum(
+                curr_lambdas + (iter_num - 2) / (iter_num + 1.0) * (curr_lambdas - prev_lambdas),
+                np.minimum(curr_lambdas, self.LAMBDA_MIN)
+            )
+
+        prev_regularizations = initial_lambdas
+        acc_regularizations = initial_lambdas
+        best_reg = initial_lambdas
+        thetas = self.problem_wrapper.solve(acc_regularizations)
+        best_cost = self.cost_fcn(self.y_validate, self.validate_idx, thetas)
+        print self.METHOD_LABEL, "nesterov init_cost", best_cost
+
+        # track progression
+        cost_path = [best_cost]
+
+        # Perform Nesterov with adaptive restarts
+        method_step_size = self.STEP_SIZE
+        shrink_factor = self.SHRINK_FACTOR_INIT
+        i_max = 3
+        total_iters = 0
+        while i_max > 2 and total_iters < self.NUMBER_OF_ITERATIONS:
+            print "restart! with i_max", i_max
+            for i in range(2, self.NUMBER_OF_ITERATIONS + 1):
+                total_iters += 1
+                i_max = i
+                lambda_derivatives = self._get_lambda_derivatives(acc_regularizations, thetas)
+                if np.array_equal(lambda_derivatives, np.array([0] * lambda_derivatives.size)):
+                    print self.METHOD_LABEL, "nesterov derivatives zero. break."
+                    break
+
+                regular_step_regs = self._get_updated_lambdas(
+                    acc_regularizations,
+                    shrink_factor * method_step_size,
+                    lambda_derivatives
+                )
+                acc_regularizations = _get_accelerated_lambdas(regular_step_regs, prev_regularizations, i)
+                print "acc_regularizations", acc_regularizations
+                prev_regularizations = regular_step_regs
+
+                potential_thetas = self.problem_wrapper.solve(acc_regularizations)
+                current_cost = self.cost_fcn(self.y_validate, self.validate_idx, potential_thetas)
+                print self.METHOD_LABEL, "nesterov current_cost", current_cost
+                is_decreasing_significantly = best_cost - current_cost > self.DECREASING_ENOUGH_THRESHOLD
+                if current_cost < best_cost:
+                    best_cost = current_cost
+                    cost_path.append(current_cost)
+                    thetas = potential_thetas
+                    best_reg = acc_regularizations
+
+                if not is_decreasing_significantly:
+                    print self.METHOD_LABEL, "nesterov DECREASING TOO SLOW"
+                    break
+
+                print self.METHOD_LABEL, "iter", i - 1, "current cost", current_cost, "best cost", best_cost, "lambdas:", best_reg
+
+        print self.METHOD_LABEL, "nesterov best cost", best_cost, "best lambdas:", best_reg
+
+        return thetas, cost_path, best_reg
+
     def _get_lambda_derivatives(self, curr_lambdas, curr_thetas):
         print "_get_lambda_derivatives, curr_lambdas", curr_lambdas
         H = np.tile(self.MM, (self.num_features, self.num_features))
         num_feat_sam = self.num_features * self.num_samples
         # print "self.problem_wrapper.tiny_e/num_feat_sam", self.problem_wrapper.tiny_e/num_feat_sam
         # H += self.problem_wrapper.tiny_e/num_feat_sam * np.eye(num_feat_sam)
-        # print "H", H
-        # print "curr_lambdas[i] * self.DD[i]", curr_lambdas[0] * self.DD[0]
-        # print "sp.linalg.block_diag", sp.linalg.block_diag(*[curr_lambdas[i] * self.DD[i] for i in range(self.num_features)])
+
         H += sp.linalg.block_diag(*[
             curr_lambdas[i] * self.DD[i] for i in range(self.num_features)
         ])
+        H = sp.sparse.csr_matrix(H)
+
+        # Check if grad is zero
         num_train = self.y_train.size
-        # print "num_train", num_train
-        # print "np.sum(curr_thetas, axis=1)", np.sum(curr_thetas, axis=1)
-        # print "curr_lambdas[0] * self.DD[0] * curr_thetas[:,0]", curr_lambdas[0] * self.DD[0] * curr_thetas[:,0]
-        # print "-self.M.T/num_train * (self.y_train - self.M * np.sum(curr_thetas, axis=1))", -self.M.T/num_train * (self.y_train - self.M * np.sum(curr_thetas, axis=1))
-        # print "-self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1))", -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1))
         true_grads = []
         for i in range(self.num_features):
             true_g = -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1)) + curr_lambdas[0] * self.DD[0] * curr_thetas[:,0] + self.problem_wrapper.tiny_e/num_feat_sam * curr_thetas[:,i]
             true_grads.append(true_g)
             print "zero?", np.max(np.abs(true_g)), np.min(np.abs(true_g)), np.linalg.norm(true_g, ord=2)
 
-        # print "H", H
-        # print "curr_lambdas", curr_lambdas
-        # print "self.DD[0]", self.DD[0]
-        # print "0: curr_lambdas * DD", curr_lambdas[0] * self.DD[0]
-        # print "1: curr_lambdas * DD", curr_lambdas[1] * self.DD[1]
-        # print sp.linalg.block_diag(*[
-        #     curr_lambdas[i] * self.DD[i] for i in range(self.num_features)
-        # ])
-        H = sp.sparse.csr_matrix(H)
-
         sum_thetas = np.matrix(np.sum(curr_thetas, axis=1))
         dloss_dlambdas = []
         num_validate = self.y_validate.size
         for i in range(self.num_features):
-            # print "=========I======", i
             b = np.zeros((num_feat_sam, 1))
             b[i * self.num_samples:(i + 1) * self.num_samples, :] = -self.DD[i] * curr_thetas[:,i]
-            # print "-self.DD[i] * curr_thetas[:,i]", -self.DD[i] * curr_thetas[:,i]
-            # print "b", b
-            # dtheta_dlambdai = sp.linalg.solve(H, b, sym_pos=True)
-            # dtheta_dlambdai = np.linalg.solve(H, b)
-            # dtheta_dlambdai, _, _, _ = np.linalg.lstsq(H, b)
             dtheta_dlambdai = spsolve(H, b)
-            # print "dtheta_dlambdai", dtheta_dlambdai
             dtheta_dlambdai = dtheta_dlambdai.reshape((self.num_features, self.num_samples)).T
             # print "dtheta_dlambdai reshaped", dtheta_dlambdai
             sum_dtheta_dlambdai = np.matrix(np.sum(dtheta_dlambdai, axis=1)).T
             # print "sum_dtheta_dlambdai", sum_dtheta_dlambdai
-            # print "self.y_validate", self.y_validate
-            # print "sum_thetas for validate", sum_thetas[self.validate_idx,:]
-            # print "self.y_validate", self.y_validate
-            # dloss_dlambdai = -1.0/num_validate * (self.validate_M * sum_dtheta_dlambdai).T * (self.y_validate - self.validate_M * sum_thetas)
             dloss_dlambdai = -1.0/num_validate * sum_dtheta_dlambdai[self.validate_idx].T * (self.y_validate - sum_thetas[self.validate_idx])
-            # print "dloss_dlambdai", dloss_dlambdai
             dloss_dlambdas.append(dloss_dlambdai[0,0])
 
         print "dloss_dlambdas", dloss_dlambdas

@@ -4,7 +4,6 @@ from common import *
 import scipy as sp
 
 SCS_MAX_ITERS = 10000
-SCS_HIGH_ACC_MAX_ITERS = SCS_MAX_ITERS * 8
 SCS_EPS = 1e-3 # default eps
 SCS_HIGH_ACC_EPS = 1e-8
 REALDATA_MAX_ITERS = 4000
@@ -467,11 +466,11 @@ class GenAddModelProblemWrapper:
             D = sp.sparse.coo_matrix(self.diff_matrices[i])
             D_sparse = cvxopt.spmatrix(D.data, D.row.tolist(), D.col.tolist())
             objective += 0.5/self.num_samples * lambdas[i] * sum_squares(D_sparse * thetas[:,i])
-        objective += 0.5 * self.tiny_e/(self.num_features * self.num_samples) * sum_squares(thetas)
+        # objective += 0.5 * self.tiny_e/(self.num_features * self.num_samples) * sum_squares(thetas)
         self.problem = Problem(Minimize(objective))
         if high_accur:
             eps = SCS_HIGH_ACC_EPS
-            max_iters = SCS_HIGH_ACC_MAX_ITERS * self.num_features
+            max_iters = SCS_MAX_ITERS * 5 * self.num_features
         else:
             eps = SCS_EPS
             max_iters = SCS_MAX_ITERS * 2
