@@ -15,10 +15,9 @@ class GenAddModelHillclimb:
     SHRINK_SHRINK_FACTOR = 0.1
     SHRINK_FACTOR_INIT = 1
     DECREASING_ENOUGH_THRESHOLD = 1e-4
-    METHOD_LABEL = "HC_Generalized_additive_model"
     USE_BOUNDARY = False #True
 
-    def __init__(self, X_train, y_train, X_validate, y_validate, X_test):
+    def __init__(self, X_train, y_train, X_validate, y_validate, X_test, nesterov=False):
         self.X_train = X_train
         self.y_train = y_train
         self.X_validate = X_validate
@@ -44,15 +43,26 @@ class GenAddModelHillclimb:
             self.DD.append(D.T * D/self.num_samples)
 
         self.cost_fcn = testerror_multi_smooth
+        self.nesterov = nesterov
+        if nesterov:
+            self.method_label = "hc_nesterov_gam"
+        else:
+            self.method_label = "hc_gam"
 
-    def run(self, initial_lambdas, debug=True):
+    def run(self, *args, **kargs):
+        if self.nesterov:
+            return self.run_nesterov(*args, **kargs)
+        else:
+            return self.run_regular(*args, **kargs)
+
+    def run_regular(self, initial_lambdas, debug=True):
         curr_regularization = initial_lambdas
 
         thetas = self.problem_wrapper.solve(curr_regularization)
         assert(thetas is not None)
 
         current_cost = self.cost_fcn(self.y_validate, self.validate_idx, thetas)
-        print self.METHOD_LABEL, "first_regularization", curr_regularization, "first cost", current_cost
+        print self.method_label, "first_regularization", curr_regularization, "first cost", current_cost
 
         # track progression
         cost_path = [current_cost]
@@ -122,19 +132,18 @@ class GenAddModelHillclimb:
                 thetas = potential_thetas
                 cost_path.append(current_cost)
 
-                print self.METHOD_LABEL, "iter:", i, "current_cost:", current_cost, "lambdas:", curr_regularization, "shrink_factor", shrink_factor
+                print self.method_label, "iter:", i, "current_cost:", current_cost, "lambdas:", curr_regularization, "shrink_factor", shrink_factor
                 print "decrease amount", cost_path[-2] - cost_path[-1]
                 if cost_path[-2] - cost_path[-1] < self.DECREASING_ENOUGH_THRESHOLD:
                     print "progress too slow", cost_path[-2] - cost_path[-1]
                     break
 
             if shrink_factor < self.SHRINK_MIN:
-                print self.METHOD_LABEL, "SHRINK SIZE TOO SMALL", "shrink_factor", shrink_factor
+                print self.method_label, "SHRINK SIZE TOO SMALL", "shrink_factor", shrink_factor
                 break
 
-        print self.METHOD_LABEL, "current cost", current_cost, "curr_regularization", curr_regularization, "total iters:", i
-        print self.METHOD_LABEL, "curr lambdas:",  "first cost", cost_path[0], "initial_lambdas", initial_lambdas
-
+        print self.method_label, "current cost", current_cost, "curr_regularization", curr_regularization, "total iters:", i
+        print self.method_label, "curr lambdas:",  "first cost", cost_path[0], "initial_lambdas", initial_lambdas
         return thetas, cost_path, curr_regularization
 
     def run_nesterov(self, initial_lambdas, debug=True):
@@ -150,7 +159,7 @@ class GenAddModelHillclimb:
         best_reg = initial_lambdas
         thetas = self.problem_wrapper.solve(acc_regularizations)
         best_cost = self.cost_fcn(self.y_validate, self.validate_idx, thetas)
-        print self.METHOD_LABEL, "nesterov init_cost", best_cost
+        print self.method_label, "init_cost", best_cost
 
         # track progression
         cost_path = [best_cost]
@@ -159,7 +168,7 @@ class GenAddModelHillclimb:
         method_step_size = self.STEP_SIZE
         shrink_factor = self.SHRINK_FACTOR_INIT
         i_max = 3
-        total_iters = 0
+        total_iters = 1
         while i_max > 2 and total_iters < self.NUMBER_OF_ITERATIONS:
             print "restart! with i_max", i_max
             for i in range(2, self.NUMBER_OF_ITERATIONS + 1):
@@ -167,7 +176,7 @@ class GenAddModelHillclimb:
                 i_max = i
                 lambda_derivatives = self._get_lambda_derivatives(acc_regularizations, thetas)
                 if np.array_equal(lambda_derivatives, np.array([0] * lambda_derivatives.size)):
-                    print self.METHOD_LABEL, "nesterov derivatives zero. break."
+                    print self.method_label, "derivatives zero. break."
                     break
 
                 regular_step_regs = self._get_updated_lambdas(
@@ -181,7 +190,7 @@ class GenAddModelHillclimb:
 
                 potential_thetas = self.problem_wrapper.solve(acc_regularizations)
                 current_cost = self.cost_fcn(self.y_validate, self.validate_idx, potential_thetas)
-                print self.METHOD_LABEL, "nesterov current_cost", current_cost
+                print self.method_label, "current_cost", current_cost
                 is_decreasing_significantly = best_cost - current_cost > self.DECREASING_ENOUGH_THRESHOLD
                 if current_cost < best_cost:
                     best_cost = current_cost
@@ -190,12 +199,12 @@ class GenAddModelHillclimb:
                     best_reg = acc_regularizations
 
                 if not is_decreasing_significantly:
-                    print self.METHOD_LABEL, "nesterov DECREASING TOO SLOW"
+                    print self.method_label, "DECREASING TOO SLOW"
                     break
 
-                print self.METHOD_LABEL, "iter", i - 1, "current cost", current_cost, "best cost", best_cost, "lambdas:", best_reg
+                print self.method_label, "iter", i - 1, "current cost", current_cost, "best cost", best_cost, "lambdas:", best_reg
 
-        print self.METHOD_LABEL, "nesterov best cost", best_cost, "best lambdas:", best_reg
+        print self.method_label, "best cost", best_cost, "best lambdas:", best_reg
 
         return thetas, cost_path, best_reg
 
