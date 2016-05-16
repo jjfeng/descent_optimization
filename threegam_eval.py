@@ -150,7 +150,7 @@ def main():
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
     smooth_fcn_list = SMOOTH_FCNS[:NUM_FUNCS]
 
-    # hc_results = MethodResults("Hillclimb")
+    hc_results = MethodResults("Hillclimb")
     hc_nesterov_results = MethodResults("Hillclimb_nesterov")
     gs_results = MethodResults("Gridsearch")
 
