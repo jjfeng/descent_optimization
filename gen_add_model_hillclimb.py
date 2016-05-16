@@ -1,3 +1,4 @@
+import sys
 import scipy as sp
 from scipy.sparse.linalg import spsolve
 import numpy as np
@@ -7,7 +8,7 @@ from common import *
 from convexopt_solvers import GenAddModelProblemWrapper
 
 class GenAddModelHillclimb:
-    NUMBER_OF_ITERATIONS = 60
+    NUMBER_OF_ITERATIONS = 50
     BOUNDARY_FACTOR = 0.95
     STEP_SIZE = 2
     LAMBDA_MIN = 1e-6
@@ -73,17 +74,11 @@ class GenAddModelHillclimb:
         for i in range(0, self.NUMBER_OF_ITERATIONS):
             print "ITER", i
             lambda_derivatives = self._get_lambda_derivatives(curr_regularization, thetas)
-            if debug and np.min(curr_regularization) > 0.01:
-                print "get_cost_components", self.problem_wrapper.get_cost_components()
-                check_derivs = self._double_check_derivative(curr_regularization)
-                print "lambda_derivatives", lambda_derivatives
-                print "numeric derivs", check_derivs
-                for j, check_d in enumerate(check_derivs):
-                    print "lambda_derivatives", lambda_derivatives[j]
-                    print "numeric_deriv", check_d
-                    print "np.abs(check_d - lambda_derivatives[j])/np.abs(check_d)", np.abs(check_d - lambda_derivatives[j])/np.abs(check_d)
-                    assert(np.abs(check_d - lambda_derivatives[j]) < 0.1 or np.abs(check_d - lambda_derivatives[j])/np.abs(check_d) < 0.1)
             assert(not np.any(np.isnan(lambda_derivatives)))
+            if debug and np.min(curr_regularization) > 0.01:
+                numeric_derivs = self._double_check_derivative(curr_regularization)
+                for j, check_d in enumerate(numeric_derivs):
+                    assert(np.abs(check_d - lambda_derivatives[j]) < 0.1 or np.abs(check_d - lambda_derivatives[j])/np.abs(check_d) < 0.1)
 
             potential_new_regularization = self._get_updated_lambdas(
                 curr_regularization,
@@ -141,9 +136,9 @@ class GenAddModelHillclimb:
             if shrink_factor < self.SHRINK_MIN:
                 print self.method_label, "SHRINK SIZE TOO SMALL", "shrink_factor", shrink_factor
                 break
+            sys.stdout.flush()
 
-        print self.method_label, "current cost", current_cost, "curr_regularization", curr_regularization, "total iters:", i
-        print self.method_label, "curr lambdas:",  "first cost", cost_path[0], "initial_lambdas", initial_lambdas
+        print self.method_label, "curr lambdas:", curr_regularization
         return thetas, cost_path, curr_regularization
 
     def run_nesterov(self, initial_lambdas, debug=True):
@@ -203,6 +198,7 @@ class GenAddModelHillclimb:
                     break
 
                 print self.method_label, "iter", i - 1, "current cost", current_cost, "best cost", best_cost, "lambdas:", best_reg
+                sys.stdout.flush()
 
         print self.method_label, "best cost", best_cost, "best lambdas:", best_reg
 
@@ -210,6 +206,9 @@ class GenAddModelHillclimb:
 
     def _get_lambda_derivatives(self, curr_lambdas, curr_thetas):
         print "_get_lambda_derivatives, curr_lambdas", curr_lambdas
+
+        self._double_check_train_loss_grad(curr_thetas, curr_lambdas)
+
         H = np.tile(self.MM, (self.num_features, self.num_features))
         num_feat_sam = self.num_features * self.num_samples
         # print "self.problem_wrapper.tiny_e/num_feat_sam", self.problem_wrapper.tiny_e/num_feat_sam
@@ -219,14 +218,6 @@ class GenAddModelHillclimb:
             curr_lambdas[i] * self.DD[i] for i in range(self.num_features)
         ])
         H = sp.sparse.csr_matrix(H)
-
-        # Check if grad is zero
-        num_train = self.y_train.size
-        true_grads = []
-        for i in range(self.num_features):
-            true_g = -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1)) + curr_lambdas[0] * self.DD[0] * curr_thetas[:,0] + self.problem_wrapper.tiny_e/num_feat_sam * curr_thetas[:,i]
-            true_grads.append(true_g)
-            print "zero?", np.max(np.abs(true_g)), np.min(np.abs(true_g)), np.linalg.norm(true_g, ord=2)
 
         sum_thetas = np.matrix(np.sum(curr_thetas, axis=1))
         dloss_dlambdas = []
@@ -278,6 +269,16 @@ class GenAddModelHillclimb:
             )
             print "(thetas1 - thetas2)/(epsilon * 2)", (thetas1 - thetas2)/(epsilon * 2)
         return deriv
+
+    def _double_check_train_loss_grad(self, curr_thetas, curr_lambdas):
+        # Check if grad of training loss is zero
+        num_train = self.y_train.size
+        true_grads = []
+        for i in range(self.num_features):
+            true_g = -self.M.T/num_train * (self.y_train - np.sum(curr_thetas[self.train_indices,:], axis=1)) + curr_lambdas[i] * self.DD[i] * curr_thetas[:,i]
+            # true_g += self.problem_wrapper.tiny_e/num_feat_sam * curr_thetas[:,i]
+            true_grads.append(true_g)
+            print "zero?", np.max(np.abs(true_g)), np.min(np.abs(true_g)), np.linalg.norm(true_g, ord=2)
 
 
     @staticmethod

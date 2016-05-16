@@ -18,35 +18,30 @@ FEATURE_RANGE = [-10.0, 10.0]
 
 FIGURE_DIR = "figures/threegam"
 
-# nesterov doesn't do so hot on three it seems?
-# NUM_RUNS = 10
-# NUM_FUNCS = 3
-# TRAIN_SIZE = 150
-# SNR = 2
-# VALIDATE_RATIO = 3
-# NUM_TEST = 60
-# NUM_GS_LAMBDAS = 4
-# MAX_LAMBDA = 50
-# TEST_HC_LAMBDAS = [10]
-
-NUM_RUNS = 30
-NUM_FUNCS = 2
-TRAIN_SIZE = 120
-SNR = 2
-VALIDATE_RATIO = 3
-NUM_TEST = 40
+NUM_RUNS = 10
 NUM_GS_LAMBDAS = 4
 MAX_LAMBDA = 50
+
+# nesterov doesn't do so hot on three it seems?
+NUM_FUNCS = 3
+TRAIN_SIZE = 150
+SNR = 2
+VALIDATE_RATIO = 3
+NUM_TEST = 50
 TEST_HC_LAMBDAS = [10]
 
-# NUM_RUNS = 1
+# NUM_FUNCS = 2
+# TRAIN_SIZE = 120
+# SNR = 2
+# VALIDATE_RATIO = 3
+# NUM_TEST = 40
+# TEST_HC_LAMBDAS = [10]
+
 # NUM_FUNCS = 4
 # TRAIN_SIZE = 180
 # SNR = 2
 # VALIDATE_RATIO = 3
 # NUM_TEST = 70
-# NUM_GS_LAMBDAS = 4
-# MAX_LAMBDA = 30
 # TEST_HC_LAMBDAS = [2]
 
 
@@ -58,6 +53,9 @@ def identity_fcn(x):
 
 def big_sin(x):
     return identity_fcn(5 * np.sin(x*3))
+
+def big_cos_sin(x):
+    return identity_fcn(6 * (np.cos(x * 1.25) + np.sin(x/2 + 0.5)))
 
 def crazy_down_sin(x):
     return identity_fcn(x * np.sin(x) - x)
@@ -94,7 +92,7 @@ def _hillclimb_coarse_grid_search(hc, smooth_fcn_list):
     print "best_cost_path", best_cost_path
     return best_thetas, best_cost_path, end_time - start_time
 
-def _plot_res(fitted_thetas, fcn_list, X, y, outfile="figures/threegam/out.png"): #, out_y_file="figures/threegam/out_y.png"):
+def _plot_res(fitted_thetas, fcn_list, X, y, outfile): #, out_y_file="figures/threegam/out_y.png"):
     colors = ["green", "blue", "red", "purple", "orange", "black", "brown"]
     print "outfile", outfile
     num_features = fitted_thetas.shape[1]
@@ -149,10 +147,10 @@ def _plot_cost_paths(cost_path_list, labels, num_funcs):
     plt.savefig("%s/cost_path_f%d.png" % (FIGURE_DIR, num_funcs))
 
 def main():
-    SMOOTH_FCNS = [big_sin, identity_fcn, crazy_down_sin, pwr_small]
+    SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
     smooth_fcn_list = SMOOTH_FCNS[:NUM_FUNCS]
 
-    hc_results = MethodResults("Hillclimb")
+    # hc_results = MethodResults("Hillclimb")
     hc_nesterov_results = MethodResults("Hillclimb_nesterov")
     gs_results = MethodResults("Gridsearch")
 
@@ -171,6 +169,7 @@ def main():
         def _create_method_result(best_thetas, runtime):
             test_err = testerror_multi_smooth(y_test, test_idx, best_thetas)
             validate_err = testerror_multi_smooth(y_validate, validate_idx, best_thetas)
+            print "create_method_result", test_err
             return MethodResult(test_err=test_err, validation_err=validate_err, runtime=runtime)
 
         def _run_hc(results, nesterov):
@@ -192,8 +191,8 @@ def main():
                 )
             return cost_path
 
+        hc_nesterov_cost_path = _run_hc(hc_nesterov_results, nesterov=True)
         hc_cost_path = _run_hc(hc_results, nesterov=False)
-        hc_nesterov_cost_path = _run_hc(hc_results, nesterov=True)
 
         if PLOT_RUNS:
             _plot_cost_paths(
@@ -225,6 +224,7 @@ def main():
 
         print "===========RUN %d ============" % i
         hc_results.print_results()
+        hc_nesterov_results.print_results()
         gs_results.print_results()
 
 if __name__ == "__main__":

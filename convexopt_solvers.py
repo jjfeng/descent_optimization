@@ -459,7 +459,7 @@ class GenAddModelProblemWrapper:
     # @param high_accur: for gradient descent on the validation errors, getting the optimal solution is super important.
     # We need it in order to have an accurate gradient for validation loss wrt lambdas
     # as dimension of the solution vector increases, the number of iterations of SCS is necessary!
-    def solve(self, lambdas, high_accur=True):
+    def solve(self, lambdas, high_accur=True, warm_start=True):
         thetas = Variable(self.num_samples, self.num_features)
         objective = 0.5/self.num_train * sum_squares(self.y - sum_entries(thetas[self.train_indices,:], axis=1))
         for i in range(len(lambdas)):
@@ -470,12 +470,12 @@ class GenAddModelProblemWrapper:
         self.problem = Problem(Minimize(objective))
         if high_accur:
             eps = SCS_HIGH_ACC_EPS
-            max_iters = SCS_MAX_ITERS * 5 * self.num_features
+            max_iters = SCS_MAX_ITERS * 4 * self.num_features # 5 * num_features
         else:
             eps = SCS_EPS
             max_iters = SCS_MAX_ITERS * 2
 
-        self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, normalize=False, use_indirect=False, eps=eps, warm_start=True)
+        self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, normalize=False, use_indirect=False, eps=eps, warm_start=warm_start)
 
         print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
         self.lambdas = lambdas
