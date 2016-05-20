@@ -8,15 +8,16 @@ from common import *
 from convexopt_solvers import GenAddModelProblemWrapper
 
 class GenAddModelHillclimb:
-    NUMBER_OF_ITERATIONS = 50
+    NUMBER_OF_ITERATIONS = 40
     BOUNDARY_FACTOR = 0.999
-    STEP_SIZE = 2
+    STEP_SIZE = 1 #2
     LAMBDA_MIN = 1e-6
     SHRINK_MIN = 1e-5
+    NESTEROV_SHRINK_MIN = 1e-2
     SHRINK_SHRINK_FACTOR = 0.1
     SHRINK_FACTOR_INIT = 1
-    DECREASING_ENOUGH_THRESHOLD = 1e-4
-    USE_BOUNDARY = False #True
+    DECREASING_ENOUGH_THRESHOLD = 1e-4 * 5
+    USE_BOUNDARY = True
 
     def __init__(self, X_train, y_train, X_validate, y_validate, X_test, nesterov=False):
         self.X_train = X_train
@@ -147,7 +148,6 @@ class GenAddModelHillclimb:
 
     def run_nesterov(self, initial_lambdas, debug=True):
         def _get_accelerated_lambdas(curr_lambdas, prev_lambdas, iter_num):
-            print "orig", curr_lambdas
             return np.maximum(
                 curr_lambdas + (iter_num - 2) / (iter_num + 1.0) * (curr_lambdas - prev_lambdas),
                 np.minimum(curr_lambdas, self.LAMBDA_MIN)
@@ -164,12 +164,12 @@ class GenAddModelHillclimb:
         cost_path = [best_cost]
 
         # Perform Nesterov with adaptive restarts
-        method_step_size = self.STEP_SIZE/2
+        method_step_size = self.STEP_SIZE
         shrink_factor = self.SHRINK_FACTOR_INIT/self.SHRINK_SHRINK_FACTOR
         i_max = 3 # the number of iterations that should happen for this lambda. otherwise nesterov is stuck!
         total_iters = 0
-        while i_max > 2 and total_iters < self.NUMBER_OF_ITERATIONS:
-            print "restart! with i_max", i_max
+        while i_max > 2 or shrink_factor > self.NESTEROV_SHRINK_MIN:
+            print self.method_label, "restart with i_max", i_max
             acc_regularizations = best_reg
             prev_regularizations = best_reg
             # shrink the step size since the previous step size resulted in an increase, more chance of success?
@@ -188,6 +188,7 @@ class GenAddModelHillclimb:
                     shrink_factor * method_step_size,
                     lambda_derivatives
                 )
+                print "orig", regular_step_regs, "shrink_factor", shrink_factor
                 acc_regularizations = _get_accelerated_lambdas(regular_step_regs, prev_regularizations, i)
                 print "acc_regularizations", acc_regularizations
                 prev_regularizations = regular_step_regs
@@ -202,15 +203,16 @@ class GenAddModelHillclimb:
                     thetas = potential_thetas
                     best_reg = acc_regularizations
 
+                if total_iters >= self.NUMBER_OF_ITERATIONS:
+                    print self.method_label, "max iters!"
+                    break
+
                 if not is_decreasing_significantly:
                     print self.method_label, "DECREASING TOO SLOW", best_cost - current_cost
                     acc_regularizations = best_reg
                     break
 
-                if total_iters > self.NUMBER_OF_ITERATIONS:
-                    break
-
-                print self.method_label, "iter", i - 1, "current cost", current_cost, "best cost", best_cost, "lambdas:", best_reg
+                print self.method_label, "iter", total_iters, "current cost", current_cost, "best cost", best_cost, "lambdas:", best_reg
                 sys.stdout.flush()
 
         print self.method_label, "best cost", best_cost, "best lambdas:", best_reg

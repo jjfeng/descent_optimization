@@ -15,13 +15,12 @@ from common import *
 
 # np.set_printoptions(threshold=np.nan)
 
-np.random.seed(9)
+np.random.seed(88)
 FEATURE_RANGE = [-5.0, 5.0]
 
 FIGURE_DIR = "figures/threegam"
 
 NUM_RUNS = 30
-NUM_GS_LAMBDAS = 4
 MAX_LAMBDA = 50
 
 NUM_FUNCS = 3
@@ -29,7 +28,8 @@ TRAIN_SIZE = 180
 SNR = 2
 VALIDATE_RATIO = 3
 NUM_TEST = 60
-TEST_HC_LAMBDAS = [10]
+TEST_HC_LAMBDAS = [1]
+NUM_GS_LAMBDAS = 10
 
 # NUM_FUNCS = 2
 # TRAIN_SIZE = 120
@@ -37,6 +37,7 @@ TEST_HC_LAMBDAS = [10]
 # VALIDATE_RATIO = 3
 # NUM_TEST = 40
 # TEST_HC_LAMBDAS = [10]
+# NUM_GS_LAMBDAS = 4
 
 # JUST FOR FUN AND TESTING
 # NUM_FUNCS = 3
@@ -85,6 +86,7 @@ def _hillclimb_coarse_grid_search(hc, smooth_fcn_list):
             best_start_lambda = lam
             best_regularization = curr_regularization
             print "better cost", best_cost, "better regularization", best_regularization
+            print "better cost_path", cost_path
         sys.stdout.flush()
 
     print "HC: best_cost", best_cost, "best_regularization", best_regularization, "best start lambda: ", best_start_lambda
@@ -119,7 +121,7 @@ def _plot_cost_paths(cost_path_list, labels, num_funcs):
     for cp, l in zip(cost_path_list, labels):
         plt.plot(cp, label=l)
     plt.legend()
-    plt.savefig("%s/cost_path_f%d.png" % (FIGURE_DIR, num_funcs))
+    plt.savefig("%s/cost_path_b_f%d.png" % (FIGURE_DIR, num_funcs))
 
 def main():
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
@@ -135,7 +137,7 @@ def main():
             TRAIN_SIZE,
             smooth_fcn_list,
             desired_snr=SNR,
-            feat_range=[f * NUM_FUNCS for f in FEATURE_RANGE],
+            feat_range=[f * TRAIN_SIZE/60 for f in FEATURE_RANGE],
             train_to_validate_ratio=VALIDATE_RATIO,
             test_size=NUM_TEST
         )

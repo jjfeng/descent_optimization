@@ -484,10 +484,9 @@ class GenAddModelProblemWrapper:
 
         # Using indirect does not work - bad derivatives! Not normalizing is also better - bigger changes.
         try:
-            print "ECOS!"
             self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL)
         except SolverError:
-            print "SCS!"
+            print "switching to SCS!"
             self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
 
         print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
