@@ -9,10 +9,10 @@ from convexopt_solvers import GenAddModelProblemWrapper
 
 class GenAddModelHillclimb:
     NUMBER_OF_ITERATIONS = 50
-    BOUNDARY_FACTOR = 0.99
+    BOUNDARY_FACTOR = 0.999
     STEP_SIZE = 2
     LAMBDA_MIN = 1e-6
-    SHRINK_MIN = 1e-2
+    SHRINK_MIN = 1e-5
     SHRINK_SHRINK_FACTOR = 0.1
     SHRINK_FACTOR_INIT = 1
     DECREASING_ENOUGH_THRESHOLD = 1e-4
@@ -164,14 +164,16 @@ class GenAddModelHillclimb:
         cost_path = [best_cost]
 
         # Perform Nesterov with adaptive restarts
-        method_step_size = self.STEP_SIZE
-        shrink_factor = self.SHRINK_FACTOR_INIT
+        method_step_size = self.STEP_SIZE/2
+        shrink_factor = self.SHRINK_FACTOR_INIT/self.SHRINK_SHRINK_FACTOR
         i_max = 3 # the number of iterations that should happen for this lambda. otherwise nesterov is stuck!
-        total_iters = 1
+        total_iters = 0
         while i_max > 2 and total_iters < self.NUMBER_OF_ITERATIONS:
             print "restart! with i_max", i_max
             acc_regularizations = best_reg
             prev_regularizations = best_reg
+            # shrink the step size since the previous step size resulted in an increase, more chance of success?
+            shrink_factor *= self.SHRINK_SHRINK_FACTOR
             for i in range(2, self.NUMBER_OF_ITERATIONS + 1):
                 i_max = i
                 total_iters += 1
@@ -203,6 +205,9 @@ class GenAddModelHillclimb:
                 if not is_decreasing_significantly:
                     print self.method_label, "DECREASING TOO SLOW", best_cost - current_cost
                     acc_regularizations = best_reg
+                    break
+
+                if total_iters > self.NUMBER_OF_ITERATIONS:
                     break
 
                 print self.method_label, "iter", i - 1, "current cost", current_cost, "best cost", best_cost, "lambdas:", best_reg

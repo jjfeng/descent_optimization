@@ -7,7 +7,7 @@ import cvxpy
 SCS_MAX_ITERS = 10000
 SCS_EPS = 1e-3 # default eps
 SCS_HIGH_ACC_EPS = 1e-6
-ECOS_ITERS = 200
+ECOS_TOL = 1e-12
 REALDATA_MAX_ITERS = 4000
 
 # Objective function: 0.5 * norm(y - Xb)^2 + lambda1 * lasso + 0.5 * lambda2 * ridge
@@ -485,7 +485,7 @@ class GenAddModelProblemWrapper:
         # Using indirect does not work - bad derivatives! Not normalizing is also better - bigger changes.
         try:
             print "ECOS!"
-            self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=1e-10, reltol=1e-9)
+            self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL)
         except SolverError:
             print "SCS!"
             self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)

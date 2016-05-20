@@ -15,12 +15,12 @@ from common import *
 
 # np.set_printoptions(threshold=np.nan)
 
-np.random.seed(70)
+np.random.seed(9)
 FEATURE_RANGE = [-5.0, 5.0]
 
 FIGURE_DIR = "figures/threegam"
 
-NUM_RUNS = 10
+NUM_RUNS = 30
 NUM_GS_LAMBDAS = 4
 MAX_LAMBDA = 50
 
@@ -38,12 +38,13 @@ TEST_HC_LAMBDAS = [10]
 # NUM_TEST = 40
 # TEST_HC_LAMBDAS = [10]
 
-# NUM_FUNCS = 4
-# TRAIN_SIZE = 180
+# JUST FOR FUN AND TESTING
+# NUM_FUNCS = 3
+# TRAIN_SIZE = 120
 # SNR = 2
 # VALIDATE_RATIO = 3
-# NUM_TEST = 70
-# TEST_HC_LAMBDAS = [2]
+# NUM_TEST = 1
+# TEST_HC_LAMBDAS = [10]
 
 DEBUG = False
 PLOT_RUNS = True
@@ -165,8 +166,8 @@ def main():
                 )
             return cost_path
 
-        hc_nesterov_cost_path = _run_hc(hc_nesterov_results, nesterov=True)
         hc_cost_path = _run_hc(hc_results, nesterov=False)
+        hc_nesterov_cost_path = _run_hc(hc_nesterov_results, nesterov=True)
 
         if PLOT_RUNS:
             _plot_cost_paths(
