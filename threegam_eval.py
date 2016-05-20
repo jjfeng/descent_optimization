@@ -13,8 +13,10 @@ import gen_add_model_gridsearch as gs
 
 from common import *
 
-np.random.seed(50)
-FEATURE_RANGE = [-10.0, 10.0]
+# np.set_printoptions(threshold=np.nan)
+
+np.random.seed(70)
+FEATURE_RANGE = [-5.0, 5.0]
 
 FIGURE_DIR = "figures/threegam"
 
@@ -22,12 +24,11 @@ NUM_RUNS = 10
 NUM_GS_LAMBDAS = 4
 MAX_LAMBDA = 50
 
-# nesterov doesn't do so hot on three it seems?
 NUM_FUNCS = 3
-TRAIN_SIZE = 150
+TRAIN_SIZE = 180
 SNR = 2
 VALIDATE_RATIO = 3
-NUM_TEST = 50
+NUM_TEST = 60
 TEST_HC_LAMBDAS = [10]
 
 # NUM_FUNCS = 2
@@ -44,7 +45,6 @@ TEST_HC_LAMBDAS = [10]
 # NUM_TEST = 70
 # TEST_HC_LAMBDAS = [2]
 
-
 DEBUG = False
 PLOT_RUNS = True
 
@@ -52,7 +52,7 @@ def identity_fcn(x):
     return x.reshape(x.size, 1)
 
 def big_sin(x):
-    return identity_fcn(5 * np.sin(x*3))
+    return identity_fcn(9 * np.sin(x*2))
 
 def big_cos_sin(x):
     return identity_fcn(6 * (np.cos(x * 1.25) + np.sin(x/2 + 0.5)))
@@ -74,7 +74,7 @@ def _hillclimb_coarse_grid_search(hc, smooth_fcn_list):
     best_regularization = []
     best_start_lambda = []
     for lam in TEST_HC_LAMBDAS:
-        init_lambdas = np.array([lam for i in range(len(smooth_fcn_list))])
+        init_lambdas = np.array([lam for i in range(NUM_FUNCS)])
         thetas, cost_path, curr_regularization = hc.run(init_lambdas, debug=DEBUG)
 
         if thetas is not None and best_cost > cost_path[-1]:
@@ -92,7 +92,7 @@ def _hillclimb_coarse_grid_search(hc, smooth_fcn_list):
     print "best_cost_path", best_cost_path
     return best_thetas, best_cost_path, end_time - start_time
 
-def _plot_res(fitted_thetas, fcn_list, X, y, outfile): #, out_y_file="figures/threegam/out_y.png"):
+def _plot_res(fitted_thetas, fcn_list, X, y, outfile):
     colors = ["green", "blue", "red", "purple", "orange", "black", "brown"]
     print "outfile", outfile
     num_features = fitted_thetas.shape[1]
@@ -112,32 +112,6 @@ def _plot_res(fitted_thetas, fcn_list, X, y, outfile): #, out_y_file="figures/th
             color=colors[i],
         )
     plt.savefig(outfile)
-
-    # plt.clf()
-    # fitted_y = np.sum(fitted_thetas, axis=1)
-    # true_y = 0
-    # for i in range(num_features):
-    #     fcn = fcn_list[i]
-    #     print fcn(X[:,i]).shape
-    #     true_y += fcn(X[:,i])
-    #
-    # for i in range(num_features):
-    #     x_features = X[:,i]
-    #     fcn = fcn_list[i]
-    #     order_x = np.argsort(x_features)
-    #     plt.plot(
-    #         x_features[order_x],
-    #         true_y[order_x], # true values
-    #         '-',
-    #         x_features[order_x], # observed x
-    #         fitted_y[order_x], # fitted y
-    #         '--',
-    #         x_features[order_x], # observed x
-    #         y[order_x], # observed values
-    #         '-.',
-    #         color=colors[i],
-    #     )
-    # plt.savefig(out_y_file)
 
 def _plot_cost_paths(cost_path_list, labels, num_funcs):
     plt.clf()
@@ -160,7 +134,7 @@ def main():
             TRAIN_SIZE,
             smooth_fcn_list,
             desired_snr=SNR,
-            feat_range=FEATURE_RANGE,
+            feat_range=[f * NUM_FUNCS for f in FEATURE_RANGE],
             train_to_validate_ratio=VALIDATE_RATIO,
             test_size=NUM_TEST
         )

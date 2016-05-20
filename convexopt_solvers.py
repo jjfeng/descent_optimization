@@ -2,10 +2,12 @@ from cvxpy import *
 import cvxopt
 from common import *
 import scipy as sp
+import cvxpy
 
 SCS_MAX_ITERS = 10000
 SCS_EPS = 1e-3 # default eps
-SCS_HIGH_ACC_EPS = 1e-8
+SCS_HIGH_ACC_EPS = 1e-6
+ECOS_ITERS = 200
 REALDATA_MAX_ITERS = 4000
 
 # Objective function: 0.5 * norm(y - Xb)^2 + lambda1 * lasso + 0.5 * lambda2 * ridge
@@ -475,7 +477,18 @@ class GenAddModelProblemWrapper:
             eps = SCS_EPS
             max_iters = SCS_MAX_ITERS * 2
 
-        self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, normalize=False, use_indirect=False, eps=eps, warm_start=warm_start)
+        # Don't use ECOS/ECOS_BB - for some reason, it's not finding good minimizers of the fcn. Even though the gradient of the training loss
+        # does reach zero, it doesn't match the calculated gradient for some reason. My guess is that ECOS is getting stuck somewhere.
+        # Ignoring that, it seems to just change on reg parameter and ignore the other ones.
+        #### HUHHHH NOW ITS WORKING?! WTF.
+
+        # Using indirect does not work - bad derivatives! Not normalizing is also better - bigger changes.
+        try:
+            print "ECOS!"
+            self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=1e-10, reltol=1e-9)
+        except SolverError:
+            print "SCS!"
+            self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
 
         print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
         self.lambdas = lambdas

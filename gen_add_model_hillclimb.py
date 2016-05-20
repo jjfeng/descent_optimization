@@ -1,6 +1,6 @@
 import sys
 import scipy as sp
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve, lsqr
 import numpy as np
 import cvxpy
 
@@ -9,7 +9,7 @@ from convexopt_solvers import GenAddModelProblemWrapper
 
 class GenAddModelHillclimb:
     NUMBER_OF_ITERATIONS = 50
-    BOUNDARY_FACTOR = 0.95
+    BOUNDARY_FACTOR = 0.99
     STEP_SIZE = 2
     LAMBDA_MIN = 1e-6
     SHRINK_MIN = 1e-2
@@ -74,10 +74,14 @@ class GenAddModelHillclimb:
         for i in range(0, self.NUMBER_OF_ITERATIONS):
             print "ITER", i
             lambda_derivatives = self._get_lambda_derivatives(curr_regularization, thetas)
+            print "lambda_derivatives", lambda_derivatives
             assert(not np.any(np.isnan(lambda_derivatives)))
             if debug and np.min(curr_regularization) > 0.01:
                 numeric_derivs = self._double_check_derivative(curr_regularization)
                 for j, check_d in enumerate(numeric_derivs):
+                    print check_d, lambda_derivatives[j]
+                    print np.abs(check_d - lambda_derivatives[j])
+                    print np.abs(check_d - lambda_derivatives[j])/np.abs(check_d)
                     assert(np.abs(check_d - lambda_derivatives[j]) < 0.1 or np.abs(check_d - lambda_derivatives[j])/np.abs(check_d) < 0.1)
 
             potential_new_regularization = self._get_updated_lambdas(
@@ -162,14 +166,17 @@ class GenAddModelHillclimb:
         # Perform Nesterov with adaptive restarts
         method_step_size = self.STEP_SIZE
         shrink_factor = self.SHRINK_FACTOR_INIT
-        i_max = 3
+        i_max = 3 # the number of iterations that should happen for this lambda. otherwise nesterov is stuck!
         total_iters = 1
         while i_max > 2 and total_iters < self.NUMBER_OF_ITERATIONS:
             print "restart! with i_max", i_max
+            acc_regularizations = best_reg
+            prev_regularizations = best_reg
             for i in range(2, self.NUMBER_OF_ITERATIONS + 1):
-                total_iters += 1
                 i_max = i
+                total_iters += 1
                 lambda_derivatives = self._get_lambda_derivatives(acc_regularizations, thetas)
+                print "lambda_derivatives", lambda_derivatives
                 if np.array_equal(lambda_derivatives, np.array([0] * lambda_derivatives.size)):
                     print self.method_label, "derivatives zero. break."
                     break
@@ -194,7 +201,8 @@ class GenAddModelHillclimb:
                     best_reg = acc_regularizations
 
                 if not is_decreasing_significantly:
-                    print self.method_label, "DECREASING TOO SLOW"
+                    print self.method_label, "DECREASING TOO SLOW", best_cost - current_cost
+                    acc_regularizations = best_reg
                     break
 
                 print self.method_label, "iter", i - 1, "current cost", current_cost, "best cost", best_cost, "lambdas:", best_reg
@@ -207,7 +215,7 @@ class GenAddModelHillclimb:
     def _get_lambda_derivatives(self, curr_lambdas, curr_thetas):
         print "_get_lambda_derivatives, curr_lambdas", curr_lambdas
 
-        self._double_check_train_loss_grad(curr_thetas, curr_lambdas)
+        # self._double_check_train_loss_grad(curr_thetas, curr_lambdas)
 
         H = np.tile(self.MM, (self.num_features, self.num_features))
         num_feat_sam = self.num_features * self.num_samples
@@ -226,6 +234,7 @@ class GenAddModelHillclimb:
             b = np.zeros((num_feat_sam, 1))
             b[i * self.num_samples:(i + 1) * self.num_samples, :] = -self.DD[i] * curr_thetas[:,i]
             dtheta_dlambdai = spsolve(H, b)
+            # dtheta_dlambdai, _, _, _, _, _, _, _, _, _ = lsqr(H, b)
             dtheta_dlambdai = dtheta_dlambdai.reshape((self.num_features, self.num_samples)).T
             # print "dtheta_dlambdai reshaped", dtheta_dlambdai
             sum_dtheta_dlambdai = np.matrix(np.sum(dtheta_dlambdai, axis=1)).T
@@ -245,7 +254,7 @@ class GenAddModelHillclimb:
                 if lambdas[idx] > self.LAMBDA_MIN and potential_lambdas[idx] < (1 - self.BOUNDARY_FACTOR) * lambdas[idx]:
                     smaller_step_size = self.BOUNDARY_FACTOR * lambdas[idx] / lambda_derivatives[idx]
                     new_step_size = min(new_step_size, smaller_step_size)
-                    print "use_boundary!", new_step_size
+                    print self.method_label, "USING THE BOUNDARY!", new_step_size
 
         return np.maximum(lambdas - new_step_size * lambda_derivatives, self.LAMBDA_MIN)
 

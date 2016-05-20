@@ -289,11 +289,20 @@ def smooth_plus_linear(train_size, num_features, num_nonzero_features, data_type
     return beta_real, Xl_train, Xs_train, y_train, Xl_validate, Xs_validate, y_validate, Xl_test, Xs_test, y_test, y_smooth_train, y_smooth_validate, y_smooth_test
 
 def multi_smooth_features(train_size, smooth_fcn_list, desired_snr=2, feat_range=[0,1], train_to_validate_ratio=15, test_size=20):
+    def make_X_smooth_feature():
+        step_size = (feat_range[1] - feat_range[0] + 0.0001)/total_samples
+        jitter = np.random.uniform(0, 1) * step_size/10
+        equal_spaced_X = np.arange(feat_range[0] + jitter, feat_range[1] + jitter, step_size)
+        np.random.shuffle(equal_spaced_X)
+        return equal_spaced_X
+
     validate_size = np.floor(train_size/train_to_validate_ratio)
     total_samples = train_size + validate_size + test_size
     num_features = len(smooth_fcn_list)
 
-    X_smooth = np.random.uniform(feat_range[0], feat_range[1], (total_samples, num_features))
+    X_smooth = make_X_smooth_feature()
+    for i in range(num_features - 1):
+        X_smooth = np.column_stack((X_smooth, make_X_smooth_feature()))
     y_smooth = 0
     for idx, fcn in enumerate(smooth_fcn_list):
         y_smooth += fcn(X_smooth[:, idx]).reshape(total_samples, 1)
