@@ -20,7 +20,7 @@ FEATURE_RANGE = [-5.0, 5.0]
 
 FIGURE_DIR = "figures/threegam"
 
-NUM_RUNS = 30
+NUM_RUNS = 1 #30
 MAX_LAMBDA = 50
 
 NUM_FUNCS = 3
@@ -41,14 +41,14 @@ NUM_GS_LAMBDAS = 10
 
 # JUST FOR FUN AND TESTING
 # NUM_FUNCS = 3
-# TRAIN_SIZE = 120
+# TRAIN_SIZE = 10
 # SNR = 2
 # VALIDATE_RATIO = 3
 # NUM_TEST = 1
 # TEST_HC_LAMBDAS = [10]
 
 DEBUG = False
-PLOT_RUNS = True
+PLOT_RUNS = False #True
 
 def identity_fcn(x):
     return x.reshape(x.size, 1)
@@ -116,12 +116,36 @@ def _plot_res(fitted_thetas, fcn_list, X, y, outfile):
         )
     plt.savefig(outfile)
 
+def _plot_gs_v_hc(gs_thetas, hc_thetas, fcn_list, X, y, outfile_prefix):
+    num_features = gs_thetas.shape[1]
+    for i in range(num_features):
+        plt.clf()
+        x_features = X[:,i]
+        fcn = fcn_list[i]
+        order_x = np.argsort(x_features)
+        plt.plot(
+            x_features[order_x],
+            fcn(x_features[order_x]), # true values
+            '-',
+        )
+        plt.plot(
+            x_features[order_x],
+            gs_thetas[order_x,i], # fitted values, gs
+            '--',
+        )
+        plt.plot(
+            x_features[order_x],
+            hc_thetas[order_x,i], # fitted values, hc
+            ':',
+        )
+        plt.savefig("%s_%d.pdf" % (outfile_prefix, i))
+
 def _plot_cost_paths(cost_path_list, labels, num_funcs):
     plt.clf()
     for cp, l in zip(cost_path_list, labels):
         plt.plot(cp, label=l)
     plt.legend()
-    plt.savefig("%s/cost_path_b_f%d.png" % (FIGURE_DIR, num_funcs))
+    plt.savefig("%s/cost_path_b_f%d.pdf" % (FIGURE_DIR, num_funcs))
 
 def main():
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
@@ -166,10 +190,10 @@ def main():
                     thetas[train_idx], smooth_fcn_list, X_train, y_train,
                     outfile="%s/train_%s_f%d.png" % (FIGURE_DIR, hillclimb_prob.method_label, NUM_FUNCS),
                 )
-            return cost_path
+            return thetas, cost_path
 
-        hc_cost_path = _run_hc(hc_results, nesterov=False)
-        hc_nesterov_cost_path = _run_hc(hc_nesterov_results, nesterov=True)
+        hc_thetas, hc_cost_path = _run_hc(hc_results, nesterov=False)
+        # hc_nesterov_thetas, hc_nesterov_cost_path = _run_hc(hc_nesterov_results, nesterov=True)
 
         if PLOT_RUNS:
             _plot_cost_paths(
@@ -197,6 +221,10 @@ def main():
             _plot_res(
                 gs_thetas[test_idx], smooth_fcn_list, X_test, y_test,
                 outfile="%s/test_gs_f%d.png" % (FIGURE_DIR, NUM_FUNCS),
+            )
+            _plot_gs_v_hc(
+                gs_thetas[train_idx], hc_thetas[train_idx], smooth_fcn_list, X_train, y_train,
+                outfile_prefix="%s/train_gs_v_hc_f%d" % (FIGURE_DIR, NUM_FUNCS),
             )
 
         print "===========RUN %d ============" % i
