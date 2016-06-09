@@ -23,7 +23,7 @@ MAX_BEST_COST = 1e10
 
 COARSE_LAMBDAS = [1e-2, 1e-1, 1, 10]
 
-seed = int(np.random.rand() * 1e15)
+seed = int(np.random.rand() * 1e5)
 print "numpy rand seed", seed
 np.random.seed(seed)
 
