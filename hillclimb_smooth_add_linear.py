@@ -91,7 +91,11 @@ def run(Xl_train, Xs_train, y_train, Xl_validate, Xs_validate, y_validate, Xs_te
         else:
             potential_cost = testerror_smooth_and_linear(Xl_validate_ordered, y_validate_ordered, potential_beta, potential_thetas[validate_indices])
 
-        while potential_cost > current_cost - BACKTRACK_ALPHA * shrink_factor * method_step_size * np.linalg.norm(lambda_derivatives)**2 and shrink_factor > SHRINK_MIN:
+        raw_backtrack_check = current_cost - BACKTRACK_ALPHA * shrink_factor * method_step_size * np.linalg.norm(lambda_derivatives)**2
+        backtrack_check = current_cost if raw_backtrack_check < 0 else raw_backtrack_check
+        print "potential_cost, backtrack_check", potential_cost, backtrack_check, raw_backtrack_check
+        while potential_cost > backtrack_check and shrink_factor > SHRINK_MIN:
+            print "potential_cost, backtrack_check", potential_cost, backtrack_check
             if potential_cost > 2 * current_cost:
                 shrink_factor *= SHRINK_SHRINK_FACTOR * 0.01
             else:
@@ -112,6 +116,11 @@ def run(Xl_train, Xs_train, y_train, Xl_validate, Xs_validate, y_validate, Xs_te
             else:
                 potential_cost = testerror_smooth_and_linear(Xl_validate_ordered, y_validate_ordered, potential_beta, potential_thetas[validate_indices])
                 print "try shrink", shrink_factor, "potential_cost", potential_cost
+
+            raw_backtrack_check = current_cost - BACKTRACK_ALPHA * shrink_factor * method_step_size * np.linalg.norm(lambda_derivatives)**2
+            backtrack_check = current_cost if raw_backtrack_check < 0 else raw_backtrack_check
+            print "potential_cost, backtrack_check, raw_backtrack_check", potential_cost, backtrack_check, raw_backtrack_check
+
 
         # track progression
         if cost_path[-1] < potential_cost:
