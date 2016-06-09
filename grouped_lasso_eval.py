@@ -48,14 +48,14 @@ def main(argv):
 
     if RUN_HC_POOLED:
         TRAIN_SIZE = 90
-        TOTAL_FEATURES = 900
-        NUM_GROUPS = 60
+        TOTAL_FEATURES = 1200
+        NUM_GROUPS = 100
 
     TRUE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / TRUE_NUM_GROUPS] * TRUE_NUM_GROUPS
     EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / NUM_GROUPS] * NUM_GROUPS
 
     if RUN_HC_POOLED:
-        COARSE_LAMBDA1S = [100, 1, 1e-2]
+        COARSE_LAMBDA1S = [1, 1e-1]
         print "RUN POOLED FOR GS and HC", NUM_GROUPS, TRUE_GROUP_FEATURE_SIZES, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES
     else:
         if TOTAL_FEATURES == 300:
@@ -109,6 +109,7 @@ def main(argv):
             intersection = np.intersect1d(np.array(guessed_nonzero_elems), np.array(true_nonzero_elems))
             sensitivity = intersection.size / float(guessed_nonzero_elems[0].size) * 100
             print "test_err", test_err, "beta_err", beta_err, "sensitivity", sensitivity
+            sys.stdout.flush()
             return MethodResult(test_err=test_err, validation_err=validation_err, beta_err=beta_err, sensitivity=sensitivity, runtime=runtime)
 
         if RUN_HC_POOLED:
