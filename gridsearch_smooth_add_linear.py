@@ -110,6 +110,8 @@ def run_simple(Xl_train, Xs_train, y_train, Xl_validate, Xs_validate, y_validate
                 beta, thetas = problem_wrapper.solve([l1, l2])
             except cvxpy.error.SolverError:
                 continue
+            if beta is None or thetas is None:
+                continue
             current_cost = testerror_smooth_and_linear(Xl_validate_ordered, y_validate_ordered, beta, thetas[validate_indices])
 
             if best_cost > current_cost:
