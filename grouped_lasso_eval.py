@@ -57,11 +57,10 @@ def main(argv):
     TRUE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / TRUE_NUM_GROUPS] * TRUE_NUM_GROUPS
     EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / NUM_GROUPS] * NUM_GROUPS
 
+    COARSE_LAMBDA1S = [1, 1e-1]
     if RUN_HC_POOLED:
-        COARSE_LAMBDA1S = [1, 1e-1]
         print "RUN POOLED FOR GS and HC"
     else:
-        COARSE_LAMBDA1S = [1, 1e-1]
         print "UNPOOLED VS. POOLED"
 
     seed = np.random.randint(0, 1e5)
