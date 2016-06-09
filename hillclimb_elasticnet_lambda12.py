@@ -10,7 +10,6 @@ LAMBDA_MIN = 1e-5
 
 # used to determine if regularization param is too close to the boundary
 BOUNDARY_FACTOR = 0.7
-print "BOUNDARY_FACTOR", BOUNDARY_FACTOR
 
 MIN_SHRINK = 1e-8
 SHRINK_SHRINK = 0.05
@@ -175,6 +174,7 @@ def _get_updated_lambdas(current_lambdas, step_size, derivative_lambdas, use_bou
 
     new_step_size = step_size
     if use_boundary:
+        print "use_boundary", BOUNDARY_FACTOR
         for idx in range(0, len(lambdas)):
             if potential_lambdas[idx] < (1 - BOUNDARY_FACTOR) * lambdas[idx]:
                 smaller_step_size = BOUNDARY_FACTOR * lambdas[idx] / derivatives[idx]

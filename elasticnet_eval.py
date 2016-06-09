@@ -62,8 +62,8 @@ for i in range(0, NUM_RUNS):
         TRAIN_SIZE, NUM_FEATURES, NUM_NONZERO_FEATURES, signal_noise_ratio=SIGNAL_NOISE_RATIO)
 
     def _create_method_result(beta_guess, runtime):
-        test_err = testerror(X_test, y_test, beta_guess) / y_test.size
-        validation_err = testerror(X_validate, y_validate, beta_guess) / y_validate.size
+        test_err = testerror(X_test, y_test, beta_guess)
+        validation_err = testerror(X_validate, y_validate, beta_guess)
         beta_err = betaerror(beta_real, beta_guess)
         print "FINAL validation_err", validation_err
         return MethodResult(test_err=test_err, beta_err=beta_err, validation_err=validation_err, runtime=runtime)

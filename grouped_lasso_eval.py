@@ -31,19 +31,25 @@ TRUE_NUM_GROUPS = 3
 
 ZERO_THRESHOLD = 0.5 * 1e-4
 
-RUN_HC_POOLED = False #True
-
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv,"m:")
+        opts, args = getopt.getopt(argv,"m:p")
     except getopt.GetoptError:
         print "BAD REQUEST"
         print "accepts a folder name. reads the XML files inside"
         sys.exit(2)
 
+    RUN_HC_POOLED = False
     for opt, arg in opts:
         if opt == '-m':
             NUM_GROUPS = int(arg)
+        elif opt == '-p':
+            RUN_HC_POOLED = True
+
+    if RUN_HC_POOLED:
+        TRAIN_SIZE = 60
+        TOTAL_FEATURES = 1500
+        NUM_GROUPS = 50
 
     TRUE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / TRUE_NUM_GROUPS] * TRUE_NUM_GROUPS
     EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / NUM_GROUPS] * NUM_GROUPS
@@ -59,7 +65,6 @@ def main(argv):
         print "UNPOOLED VS. POOLED", NUM_GROUPS, TRUE_GROUP_FEATURE_SIZES, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES
 
     seed = np.random.randint(0, 1e5)
-    seed = 43573
     np.random.seed(seed)
     print "RANDOM SEED", seed
 

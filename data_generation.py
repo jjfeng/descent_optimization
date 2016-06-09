@@ -212,13 +212,13 @@ def effects_and_other_effects(train_size, num_effects, num_nonzero_effects, num_
 
 # y = sum(X_l * beta_l) + epsilon
 # X_trains, X_validates, X_tests are returned as arrays of each of the feature groups
-def sparse_groups(train_size, group_feature_sizes, desired_signal_noise_ratio=2):
+def sparse_groups(train_size, group_feature_sizes, validate_size_ratio=3, desired_signal_noise_ratio=2):
     print "DATA: sparse group lasso data"
 
     BASE_NONZERO_COEFF = [1, 2, 3, 4, 5]
     NONZERO_FEATURES = len(BASE_NONZERO_COEFF)
 
-    validate_size = train_size/3 #_get_validate_size(train_size)
+    validate_size = train_size/validate_size_ratio #_get_validate_size(train_size)
     total_samples = train_size + validate_size + TEST_SIZE
     print "validate_size", validate_size, train_size, TEST_SIZE
 
