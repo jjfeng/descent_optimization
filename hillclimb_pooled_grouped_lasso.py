@@ -3,19 +3,16 @@ import numpy as np
 from common import *
 from convexopt_solvers import GroupedLassoProblemWrapperSimple
 
-NUMBER_OF_ITERATIONS = 60
+NUMBER_OF_ITERATIONS = 40 #60
 STEP_SIZE = 1
-LAMBDA_MIN = 1e-5
-LAMBDA1_INITIAL_FACTOR = 1e-3
-LAMBDA2_INITIAL_FACTOR = 1e-2
 BOUNDARY_FACTOR = 0.5
-DECREASING_ENOUGH_THRESHOLD = 1e-4
-SHRINK_SHRINK = 0.05
-MIN_SHRINK = 1e-15
+DECREASING_ENOUGH_THRESHOLD = 1e-4 * 5
+SHRINK_SHRINK = 0.1 #05
+MIN_SHRINK = 1e-6 #15
 MIN_METHOD_STEP = 1e-10
-MIN_LAMBDA = 1e-10
+MIN_LAMBDA = 1e-6 #10
 DEFAULT_LAMBDA = 1e-4
-BACKTRACK_ALPHA = 1e-2
+BACKTRACK_ALPHA = 0.001 #1e-2
 
 def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_lambda1=DEFAULT_LAMBDA):
     method_step_size = STEP_SIZE
