@@ -14,11 +14,7 @@ GENERATE_PLOT = False #True
 NUM_RUNS = 30
 
 # a new test?
-TRAIN_SIZE = 90
-TOTAL_FEATURES = 900
 TRUE_NUM_GROUPS = 3
-# NUM_GROUPS = 120
-# NUM_GROUPS = 40
 
 # TOTAL_FEATURES = 1500
 # TRUE_NUM_GROUPS = 3
@@ -33,7 +29,7 @@ ZERO_THRESHOLD = 0.5 * 1e-4
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv,"m:p")
+        opts, args = getopt.getopt(argv,"m:d:p")
     except getopt.GetoptError:
         print "BAD REQUEST"
         print "accepts a folder name. reads the XML files inside"
@@ -43,30 +39,42 @@ def main(argv):
     for opt, arg in opts:
         if opt == '-m':
             NUM_GROUPS = int(arg)
+        elif opt == '-d':
+            data_type = int(arg)
+            if data_type == 1:
+                TRAIN_SIZE = 60
+                TOTAL_FEATURES = 300
+                NUM_GROUPS = 30
+            elif data_type == 2:
+                TRAIN_SIZE = 90
+                TOTAL_FEATURES = 900
+                NUM_GROUPS = 60
+            elif data_type == 3:
+                TRAIN_SIZE = 90
+                TOTAL_FEATURES = 1200
+                NUM_GROUPS = 100
         elif opt == '-p':
             RUN_HC_POOLED = True
-
-    if RUN_HC_POOLED:
-        TRAIN_SIZE = 90
-        TOTAL_FEATURES = 1200
-        NUM_GROUPS = 100
 
     TRUE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / TRUE_NUM_GROUPS] * TRUE_NUM_GROUPS
     EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / NUM_GROUPS] * NUM_GROUPS
 
     if RUN_HC_POOLED:
         COARSE_LAMBDA1S = [1, 1e-1]
-        print "RUN POOLED FOR GS and HC", NUM_GROUPS, TRUE_GROUP_FEATURE_SIZES, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES
+        print "RUN POOLED FOR GS and HC"
     else:
         if TOTAL_FEATURES == 300:
             COARSE_LAMBDA1S = [10, 1, 1e-1]
         else:
             COARSE_LAMBDA1S = [1, 1e-1]
-        print "UNPOOLED VS. POOLED", NUM_GROUPS, TRUE_GROUP_FEATURE_SIZES, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES
+        print "UNPOOLED VS. POOLED"
 
     seed = np.random.randint(0, 1e5)
     np.random.seed(seed)
     print "RANDOM SEED", seed
+    print "TRAIN_SIZE", TRAIN_SIZE
+    print "TOTAL_FEATURES", TOTAL_FEATURES
+    print "NUM_GROUPS", NUM_GROUPS
 
     def _hillclimb_coarse_grid_search(optimization_func, *args, **kwargs):
         start_time = time.time()
@@ -113,14 +121,12 @@ def main(argv):
             return MethodResult(test_err=test_err, validation_err=validation_err, beta_err=beta_err, sensitivity=sensitivity, runtime=runtime)
 
         if RUN_HC_POOLED:
-            print "RUN_HC_POOLED"
             hc_pooled_beta_guesses, hc_pooled_costpath, runtime = _hillclimb_coarse_grid_search(hc_pooled.run, X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
             hc_pooled_results.append(_create_method_result(hc_pooled_beta_guesses, runtime))
 
             # hc_pooled_nesterov_beta_guesses, hc_pooled_nesterov_costpath, runtime = _hillclimb_coarse_grid_search(hc_pooled.run_nesterov, X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
             # hc_pooled_nesterov_results.append(_create_method_result(hc_pooled_nesterov_beta_guesses, runtime))
         else:
-            print "RUN_HC_UNPOOLED"
             hc_beta_guesses, hc_costpath, runtime = _hillclimb_coarse_grid_search(hc.run, X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
             hc_results.append(_create_method_result(hc_beta_guesses, runtime))
 
