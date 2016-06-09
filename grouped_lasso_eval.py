@@ -14,8 +14,8 @@ GENERATE_PLOT = False #True
 NUM_RUNS = 30
 
 # a new test?
-TRAIN_SIZE = 180
-TOTAL_FEATURES = 1200
+TRAIN_SIZE = 90
+TOTAL_FEATURES = 900
 TRUE_NUM_GROUPS = 3
 # NUM_GROUPS = 120
 # NUM_GROUPS = 40
@@ -49,17 +49,17 @@ def main(argv):
     EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES = [TOTAL_FEATURES / NUM_GROUPS] * NUM_GROUPS
 
     if RUN_HC_POOLED:
-        COARSE_LAMBDA1S = [1e-2, 1, 100]
+        COARSE_LAMBDA1S = [100, 1, 1e-2]
         print "RUN POOLED FOR GS and HC", NUM_GROUPS, TRUE_GROUP_FEATURE_SIZES, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES
     else:
         if TOTAL_FEATURES == 300:
-            COARSE_LAMBDA1S = [1e-1, 1, 10]
+            COARSE_LAMBDA1S = [10, 1, 1e-1]
         else:
-            COARSE_LAMBDA1S = [1e-4, 1e-3, 1e-2, 1e-1, 1]
+            COARSE_LAMBDA1S = [1, 1e-1]
         print "UNPOOLED VS. POOLED", NUM_GROUPS, TRUE_GROUP_FEATURE_SIZES, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES
 
     seed = np.random.randint(0, 1e5)
-    seed = 12372
+    seed = 43573
     np.random.seed(seed)
     print "RANDOM SEED", seed
 

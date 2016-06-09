@@ -3,15 +3,15 @@ import numpy as np
 from common import *
 from convexopt_solvers import GroupedLassoProblemWrapper
 
-NUMBER_OF_ITERATIONS = 40
+NUMBER_OF_ITERATIONS = 20
 STEP_SIZE = 1
 BOUNDARY_FACTOR = 0.5
-DECREASING_ENOUGH_THRESHOLD = 1e-4
-SHRINK_SHRINK = 0.05
-MIN_SHRINK = 1e-10 #2
+DECREASING_ENOUGH_THRESHOLD = 1e-4 * 5
+SHRINK_SHRINK = 0.1 #0.01?
+MIN_SHRINK = 1e-6 #2
 MIN_LAMBDA = 1e-6 #8
 DEFAULT_LAMBDA = 1e-4
-BACKTRACK_ALPHA = 0 #0.001 - works well for the 300 feat setting
+BACKTRACK_ALPHA = 0.001
 
 def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_lambda1=DEFAULT_LAMBDA):
     print "BACKTRACK_ALPHA", BACKTRACK_ALPHA
@@ -154,6 +154,7 @@ def run_nesterov(X_train, y_train, X_validate, y_validate, group_feature_sizes, 
 
 def _get_updated_lambdas(lambdas, method_step_size, lambda_derivatives, use_boundary=False):
     new_step_size = method_step_size
+    print "max abs deriv", np.max(np.abs(lambda_derivatives)), np.linalg.norm(lambda_derivatives)
     if use_boundary:
         potential_lambdas = lambdas - method_step_size * lambda_derivatives
 
@@ -249,7 +250,7 @@ def _get_lambda_derivatives_mini(X_train, y_train, X_validate, y_validate, betas
 def _check_lambda_derivatives(problem_wrapper, X_validate, y_validate, regularization, eps=1e-5):
     print "double_check_derivative"
     deriv = []
-    for i in range(min(5, len(regularization))):
+    for i in range(min(15, len(regularization))):
         print "===========CHECK I= %d ===============" % i
         reg1 = np.copy(regularization)
         reg1[i] = reg1[i] + eps
@@ -273,3 +274,7 @@ def _compare_numeric_calculated_derivs(calculated_derivatives, numeric_derivs):
     for i, n_deriv in enumerate(numeric_derivs):
         print "calc", calculated_derivatives[i], "num", n_deriv
         print "diff", np.abs(calculated_derivatives[i] - n_deriv)
+        abs_diff = np.linalg.norm(calculated_derivatives[i] - n_deriv)
+        diff_ratio = np.linalg.norm(calculated_derivatives[i] - n_deriv)/np.linalg.norm(n_deriv)
+        print "diff ratio", diff_ratio
+        assert(diff_ratio < 0.05 or abs_diff < 0.8)

@@ -114,17 +114,21 @@ class GroupedLassoProblemWrapper:
             + self.lambda2 * sparsity_regularization)
         self.problem = Problem(objective, [])
 
-    def solve(self, lambdas, use_regular_eps=False):
+    def solve(self, lambdas):
         for idx in self.group_range:
             self.lambda1s[idx].value = lambdas[idx]
 
         self.lambda2.value = lambdas[-1]
 
-        if use_regular_eps:
-            eps = SCS_EPS
-        else:
-            eps = SCS_HIGH_ACC_EPS/100
-        self.problem.solve(solver=SCS, verbose=VERBOSE, eps=eps, use_indirect=False, warm_start=True)
+        tol = 1e-6
+        ecos_iters = 200
+        try:
+            self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL, abstol_inacc=tol, reltol_inacc=tol, max_iters=ecos_iters)
+        except SolverError:
+            print "switching to SCS!"
+            self.problem.solve(solver=SCS, verbose=VERBOSE, eps=SCS_HIGH_ACC_EPS/100, max_iters=SCS_MAX_ITERS * 4, use_indirect=False, normalize=False, warm_start=True)
+
+        print "self.problem.status", self.problem.status
         return [b.value for b in self.betas]
 
 

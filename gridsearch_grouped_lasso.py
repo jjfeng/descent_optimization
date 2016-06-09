@@ -17,8 +17,8 @@ def run(X_train, y_train, X_validate, y_validate, group_feature_sizes):
         infty_norm = max(infty_norm, np.linalg.norm(X_train[:, start_feature : start_feature + group_feature_size].T * y_train, 2))
         start_feature += group_feature_size
 
-    num_lambdas = 10
-    max_power = np.log(infty_norm)
+    num_lambdas = 8 #10
+    max_power = np.log(infty_norm) * 0.8
     min_power = np.log(LAMBDA_MIN_FACTOR * max_power)
     lambda_guesses = np.power(np.e, np.arange(min_power, max_power, (max_power - min_power - 0.01) / (num_lambdas - 1)))
     print "gridsearch: lambda_guesses", lambda_guesses
@@ -31,7 +31,7 @@ def run(X_train, y_train, X_validate, y_validate, group_feature_sizes):
 
     for l1 in lambda_guesses:
         for l2 in lambda_guesses:
-            betas = problem_wrapper.solve([l1, l2], use_regular_eps=True)
+            betas = problem_wrapper.solve([l1, l2])
             current_cost = testerror_grouped(X_validate, y_validate, betas)
             if best_cost > current_cost:
                 best_cost = current_cost

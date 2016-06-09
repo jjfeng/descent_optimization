@@ -1,9 +1,9 @@
 RESULTS 1:
 * ELASTIC NET - elasticnet_eval.py
-* SPARSE GROUP LASSO  - grouped_lasso_eval.py
-* APLM 2 - smooth_add_linear_simple_eval.py
+* SPARSE GROUP LASSO  - grouped_lasso_eval.py, set UNPOOLED to False
+* APLM 2 - smooth_add_linear_simple_eval.py, data type 1
 
 RESULTS 2:
-* UNPOOLED SPARSE GROUP LASSO - grouped_lasso_eval.py
-* APLM 3 - smooth_add_linear_eval.py
+* UNPOOLED SPARSE GROUP LASSO - grouped_lasso_eval.py, set UNPOOLED to true
+* APLM 3 - smooth_add_linear_eval.py, data type 2, 0, 1
 * GAM 3 - three_gam_eval.py
