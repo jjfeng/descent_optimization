@@ -112,12 +112,14 @@ def main(argv):
             return MethodResult(test_err=test_err, validation_err=validation_err, beta_err=beta_err, sensitivity=sensitivity, runtime=runtime)
 
         if RUN_HC_POOLED:
+            print "RUN_HC_POOLED"
             hc_pooled_beta_guesses, hc_pooled_costpath, runtime = _hillclimb_coarse_grid_search(hc_pooled.run, X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
             hc_pooled_results.append(_create_method_result(hc_pooled_beta_guesses, runtime))
 
             # hc_pooled_nesterov_beta_guesses, hc_pooled_nesterov_costpath, runtime = _hillclimb_coarse_grid_search(hc_pooled.run_nesterov, X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
             # hc_pooled_nesterov_results.append(_create_method_result(hc_pooled_nesterov_beta_guesses, runtime))
         else:
+            print "RUN_HC_UNPOOLED"
             hc_beta_guesses, hc_costpath, runtime = _hillclimb_coarse_grid_search(hc.run, X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
             hc_results.append(_create_method_result(hc_beta_guesses, runtime))
 
