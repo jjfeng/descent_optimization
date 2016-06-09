@@ -31,7 +31,7 @@ def run(X_train, y_train, X_validate, y_validate, group_feature_sizes):
 
     for l1 in lambda_guesses:
         for l2 in lambda_guesses:
-            betas = problem_wrapper.solve([l1, l2])
+            betas = problem_wrapper.solve([l1, l2], high_accur=False)
             current_cost = testerror_grouped(X_validate, y_validate, betas)
             if best_cost > current_cost:
                 best_cost = current_cost
