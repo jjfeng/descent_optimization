@@ -13,18 +13,23 @@ import gridsearch_grouped_lasso
 GENERATE_PLOT = False #True
 NUM_RUNS = 30
 
-TRAIN_SIZE = 60
-TOTAL_FEATURES = 1500
+# a new test?
+TRAIN_SIZE = 180
+TOTAL_FEATURES = 1200
 TRUE_NUM_GROUPS = 3
-# NUM_GROUPS = 150
-# NUM_GROUPS = 50
+# NUM_GROUPS = 120
+# NUM_GROUPS = 40
+
+# TOTAL_FEATURES = 1500
+# TRUE_NUM_GROUPS = 3
+# NUM_GROUPS = 50 # 150?
 
 # TRAIN_SIZE = 60
 # TOTAL_FEATURES = 300
 # TRUE_NUM_GROUPS = 3
 # NUM_GROUPS = 30
 
-ZERO_THRESHOLD = 0.5 * 1e-4 # 0.8 * 1e-4
+ZERO_THRESHOLD = 0.5 * 1e-4
 
 RUN_HC_POOLED = False #True
 
@@ -50,10 +55,11 @@ def main(argv):
         if TOTAL_FEATURES == 300:
             COARSE_LAMBDA1S = [1e-1, 1, 10]
         else:
-            COARSE_LAMBDA1S = [1e-2, 1e-1, 1]
+            COARSE_LAMBDA1S = [1e-4, 1e-3, 1e-2, 1e-1, 1]
         print "UNPOOLED VS. POOLED", NUM_GROUPS, TRUE_GROUP_FEATURE_SIZES, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES
 
     seed = np.random.randint(0, 1e5)
+    seed = 12372
     np.random.seed(seed)
     print "RANDOM SEED", seed
 
@@ -97,7 +103,7 @@ def main(argv):
             true_nonzero_elems = np.where(get_nonzero_indices(beta_reals_all, threshold=ZERO_THRESHOLD))
             intersection = np.intersect1d(np.array(guessed_nonzero_elems), np.array(true_nonzero_elems))
             sensitivity = intersection.size / float(guessed_nonzero_elems[0].size) * 100
-            print "test_err", test_err, "beta_err", beta_err
+            print "test_err", test_err, "beta_err", beta_err, "sensitivity", sensitivity
             return MethodResult(test_err=test_err, validation_err=validation_err, beta_err=beta_err, sensitivity=sensitivity, runtime=runtime)
 
         if RUN_HC_POOLED:

@@ -5,15 +5,13 @@ from convexopt_solvers import GroupedLassoProblemWrapper
 
 NUMBER_OF_ITERATIONS = 40
 STEP_SIZE = 1
-LAMBDA1_INITIAL_FACTOR = 1e-3
-LAMBDA2_INITIAL_FACTOR = 1e-2
 BOUNDARY_FACTOR = 0.5
 DECREASING_ENOUGH_THRESHOLD = 1e-4
 SHRINK_SHRINK = 0.05
-MIN_SHRINK = 1e-12
-MIN_LAMBDA = 1e-8
+MIN_SHRINK = 1e-10 #2
+MIN_LAMBDA = 1e-6 #8
 DEFAULT_LAMBDA = 1e-4
-BACKTRACK_ALPHA = 1e-6 #0.001 - works well for the 300 feat setting
+BACKTRACK_ALPHA = 0 #0.001 - works well for the 300 feat setting
 
 def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_lambda1=DEFAULT_LAMBDA):
     print "BACKTRACK_ALPHA", BACKTRACK_ALPHA
@@ -35,6 +33,8 @@ def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_l
     shrink_factor = 1
     for i in range(1, NUMBER_OF_ITERATIONS):
         lambda_derivatives = _get_lambda_derivatives(X_train, y_train, X_validate, y_validate, betas, curr_regularizations)
+        # numeric_derivs = _check_lambda_derivatives(problem_wrapper, X_validate, y_validate, curr_regularizations)
+        # _compare_numeric_calculated_derivs(lambda_derivatives, numeric_derivs)
 
         if np.any(np.isnan(lambda_derivatives)):
             print "some value in df_dlambda is nan"
@@ -245,3 +245,31 @@ def _get_lambda_derivatives_mini(X_train, y_train, X_validate, y_validate, betas
     df_dlambda1s = np.reshape(np.array(df_dlambda1s), df_dlambda1s.size)
     df_dlambda2 = -1.0 / y_validate.size * (X_validate * dbeta_dlambda2).T * err_vector
     return np.concatenate((df_dlambda1s, [df_dlambda2[0,0]]))
+
+def _check_lambda_derivatives(problem_wrapper, X_validate, y_validate, regularization, eps=1e-5):
+    print "double_check_derivative"
+    deriv = []
+    for i in range(min(5, len(regularization))):
+        print "===========CHECK I= %d ===============" % i
+        reg1 = np.copy(regularization)
+        reg1[i] = reg1[i] + eps
+        betas1 = problem_wrapper.solve(reg1)
+        error1 = testerror_grouped(X_validate, y_validate, betas1)
+
+        reg2 = np.copy(regularization)
+        reg2[i] -= eps
+        betas2 = problem_wrapper.solve(reg2)
+        error2 = testerror_grouped(X_validate, y_validate, betas2)
+        print "(error1 - error2)/(epsilon * 2)", (error1 - error2)/(eps * 2)
+        deriv.append(
+            (error1 - error2)/(eps * 2)
+        )
+        betas1 = np.array(betas1)
+        betas2 = np.array(betas2)
+        print "(betas1 - betas2)/(epsilon * 2)", (betas1 - betas2)/(eps * 2)
+    return deriv
+
+def _compare_numeric_calculated_derivs(calculated_derivatives, numeric_derivs):
+    for i, n_deriv in enumerate(numeric_derivs):
+        print "calc", calculated_derivatives[i], "num", n_deriv
+        print "diff", np.abs(calculated_derivatives[i] - n_deriv)

@@ -215,12 +215,12 @@ def effects_and_other_effects(train_size, num_effects, num_nonzero_effects, num_
 def sparse_groups(train_size, group_feature_sizes, desired_signal_noise_ratio=2):
     print "DATA: sparse group lasso data"
 
-    # np.random.seed(9)
     BASE_NONZERO_COEFF = [1, 2, 3, 4, 5]
     NONZERO_FEATURES = len(BASE_NONZERO_COEFF)
 
-    validate_size = _get_validate_size(train_size)
+    validate_size = train_size/3 #_get_validate_size(train_size)
     total_samples = train_size + validate_size + TEST_SIZE
+    print "validate_size", validate_size, train_size, TEST_SIZE
 
     X = np.matrix(np.random.randn(total_samples, np.sum(group_feature_sizes)))
     betas = [np.matrix(np.concatenate((BASE_NONZERO_COEFF, [0 for i in range(0, num_features - NONZERO_FEATURES)]))).T for num_features in group_feature_sizes]
