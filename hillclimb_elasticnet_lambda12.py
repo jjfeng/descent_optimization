@@ -15,11 +15,13 @@ print "BOUNDARY_FACTOR", BOUNDARY_FACTOR
 MIN_SHRINK = 1e-8
 SHRINK_SHRINK = 0.05
 DECREASING_ENOUGH_THRESHOLD = 1e-4
+BACKTRACK_ALPHA = 0.01
 
 def run(X_train, y_train, X_validate, y_validate, diminishing_step_size=False, initial_lambda1=1, initial_lambda2=1):
     shrink_factor = 1
     def _get_step_size(iter_num):
         if diminishing_step_size:
+            print "diminishing_step_size"
             return DIMINISHING_STEP_ALPHA / iter_num
         else:
             return STEP_SIZE
@@ -52,7 +54,8 @@ def run(X_train, y_train, X_validate, y_validate, diminishing_step_size=False, i
         potential_beta_guess = problem_wrapper.solve(potential_lambdas[0], potential_lambdas[1])
         potential_cost = testerror(X_validate, y_validate, potential_beta_guess)
 
-        while potential_cost > current_cost and shrink_factor > MIN_SHRINK:
+        # while potential_cost > current_cost and shrink_factor > MIN_SHRINK:
+        while potential_cost > current_cost - BACKTRACK_ALPHA * shrink_factor * method_step_size * np.linalg.norm(derivative_lambdas)**2 and shrink_factor > MIN_SHRINK:
             shrink_factor *= SHRINK_SHRINK
             potential_lambdas = _get_updated_lambdas(curr_lambdas, method_step_size * shrink_factor, derivative_lambdas)
             potential_beta_guess = problem_wrapper.solve(potential_lambdas[0], potential_lambdas[1])

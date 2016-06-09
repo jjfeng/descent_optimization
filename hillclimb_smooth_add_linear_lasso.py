@@ -16,6 +16,7 @@ METHOD_STEP_SIZE_MIN = 1e-32
 SHRINK_SHRINK_FACTOR = 0.1
 SHRINK_FACTOR_INIT = 1
 DECREASING_ENOUGH_THRESHOLD = 3 * 1e-4
+BACKTRACK_ALPHA = 0.01
 
 def _get_order_indices(Xs_train, Xs_validate, Xs_test):
     Xs = np.vstack((Xs_train, Xs_validate, Xs_test))
@@ -89,7 +90,7 @@ def run(Xl_train, Xs_train, y_train, Xl_validate, Xs_validate, y_validate, Xs_te
         else:
             potential_cost = testerror_smooth_and_linear(Xl_validate_ordered, y_validate_ordered, potential_beta, potential_thetas[validate_indices])
 
-        while potential_cost >= current_cost and shrink_factor > SHRINK_MIN:
+        while potential_cost >= current_cost - BACKTRACK_ALPHA * shrink_factor * method_step_size * np.linalg.norm(lambda_derivatives)**2 and shrink_factor > SHRINK_MIN:
             if potential_cost > 2 * current_cost:
                 shrink_factor *= SHRINK_SHRINK_FACTOR * 0.01
             else:

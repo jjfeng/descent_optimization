@@ -1,0 +1,9 @@
+RESULTS 1:
+* ELASTIC NET - elasticnet_eval.py
+* SPARSE GROUP LASSO  - grouped_lasso_eval.py
+* APLM 2 - smooth_add_linear_simple_eval.py
+
+RESULTS 2:
+* UNPOOLED SPARSE GROUP LASSO - grouped_lasso_eval.py
+* APLM 3 - smooth_add_linear_eval.py
+* GAM 3 - three_gam_eval.py

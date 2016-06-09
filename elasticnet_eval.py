@@ -8,8 +8,8 @@ import gridsearch_elasticnet_lambda12
 from method_results import MethodResult
 from method_results import MethodResults
 
-GENERATE_PLOT = True
-NUM_RUNS = 1
+GENERATE_PLOT = False #True
+NUM_RUNS = 30
 
 SIGNAL_NOISE_RATIO = 2
 
@@ -24,7 +24,7 @@ TRAIN_SIZE = 80
 COARSE_LAMBDA_GRID = [1e-2, 1e1]
 NUM_RANDOM_LAMBDAS = 3
 
-seed = int(np.random.rand() * 1e10)
+seed = int(np.random.rand() * 1e5)
 np.random.seed(seed)
 print "SEED", seed
 
@@ -71,8 +71,8 @@ for i in range(0, NUM_RUNS):
     hc_beta_guess, hc_cost_path, runtime = _hillclimb_coarse_grid_search(hc.run, X_train, y_train, X_validate, y_validate, diminishing_step_size=False)
     hc_results.append(_create_method_result(hc_beta_guess, runtime))
 
-    hc_nesterov_beta_guess, hc_nesterov_cost_path, runtime = _hillclimb_coarse_grid_search(hc.run_nesterov, X_train, y_train, X_validate, y_validate)
-    hc_nesterov_results.append(_create_method_result(hc_nesterov_beta_guess, runtime))
+    # hc_nesterov_beta_guess, hc_nesterov_cost_path, runtime = _hillclimb_coarse_grid_search(hc.run_nesterov, X_train, y_train, X_validate, y_validate)
+    # hc_nesterov_results.append(_create_method_result(hc_nesterov_beta_guess, runtime))
 
     # hc_lambda_alpha_beta_guess, _ = hillclimb_elasticnet_lambda_alpha.run(X_train, y_train, X_validate, y_validate, diminishing_step_size=False, do_shrink=False)
     # hc_lambda_alpha_results.append_test_beta_err(_get_test_beta_err(hc_lambda_alpha_beta_guess))
@@ -98,7 +98,7 @@ for i in range(0, NUM_RUNS):
     print "TRAIN SIZE", TRAIN_SIZE
 
     hc_results.print_results()
-    hc_nesterov_results.print_results()
+    # hc_nesterov_results.print_results()
     # hc_dim_results.print_results()
     # hc_lambda_alpha_results.print_results()
     # hc_lambda_alpha_results1.print_results()

@@ -5,22 +5,23 @@ from convexopt_solvers import GroupedLassoProblemWrapper
 
 NUMBER_OF_ITERATIONS = 40
 STEP_SIZE = 1
-LAMBDA_MIN = 1e-5
 LAMBDA1_INITIAL_FACTOR = 1e-3
 LAMBDA2_INITIAL_FACTOR = 1e-2
 BOUNDARY_FACTOR = 0.5
 DECREASING_ENOUGH_THRESHOLD = 1e-4
 SHRINK_SHRINK = 0.05
-MIN_SHRINK = 1e-10
-MIN_LAMBDA = 1e-6
+MIN_SHRINK = 1e-12
+MIN_LAMBDA = 1e-8
 DEFAULT_LAMBDA = 1e-4
+BACKTRACK_ALPHA = 1e-6 #0.001 - works well for the 300 feat setting
 
 def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_lambda1=DEFAULT_LAMBDA):
+    print "BACKTRACK_ALPHA", BACKTRACK_ALPHA
     method_step_size = STEP_SIZE
     method_label = HC_GROUPED_LASSO_LABEL
 
     curr_regularizations = np.concatenate((
-        np.ones(len(group_feature_sizes)) * initial_lambda1,  # lambda1s
+        np.ones(len(group_feature_sizes)) * initial_lambda1,
         [initial_lambda1]
     ))
     problem_wrapper = GroupedLassoProblemWrapper(X_train, y_train, group_feature_sizes)
@@ -35,6 +36,10 @@ def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_l
     for i in range(1, NUMBER_OF_ITERATIONS):
         lambda_derivatives = _get_lambda_derivatives(X_train, y_train, X_validate, y_validate, betas, curr_regularizations)
 
+        if np.any(np.isnan(lambda_derivatives)):
+            print "some value in df_dlambda is nan"
+            break
+
         # do the gradient descent!
         pot_lambdas = _get_updated_lambdas(curr_regularizations, shrink_factor * method_step_size, lambda_derivatives)
 
@@ -47,8 +52,14 @@ def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_l
             print "value error", e
             pot_cost = 1e10
 
-        while pot_cost >= best_cost and shrink_factor > MIN_SHRINK:
+        backtrack_check = best_cost - BACKTRACK_ALPHA * shrink_factor * method_step_size * np.linalg.norm(lambda_derivatives)**2
+        backtrack_check = best_cost if backtrack_check < 0 else backtrack_check
+        while pot_cost > backtrack_check and shrink_factor > MIN_SHRINK:
+            print "bactrack?", pot_cost, backtrack_check
             shrink_factor *= SHRINK_SHRINK
+            backtrack_check = best_cost - BACKTRACK_ALPHA * shrink_factor * method_step_size * np.linalg.norm(lambda_derivatives)**2
+            print "backtrack_check?", backtrack_check
+            backtrack_check = best_cost if backtrack_check < 0 else backtrack_check
             print "shrink!", shrink_factor
             pot_lambdas = _get_updated_lambdas(curr_regularizations, shrink_factor * method_step_size, lambda_derivatives)
             pot_betas = problem_wrapper.solve(pot_lambdas)
@@ -78,7 +89,7 @@ def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_l
         # track progression
         cost_path.append(pot_cost)
 
-        print method_label, "iter", i, "best cost", best_cost, "lambdas:", curr_regularizations
+        print method_label, "iter", i, "best cost", best_cost #, "lambdas:", curr_regularizations
 
     print method_label, "best cost", best_cost, "lambdas:", curr_regularizations
     return best_beta, cost_path

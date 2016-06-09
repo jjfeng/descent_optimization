@@ -9,9 +9,9 @@ from data_generation import smooth_plus_linear
 import hillclimb_smooth_add_linear as hc
 import gridsearch_smooth_add_linear as gs
 
-GENERATE_PLOT = True
+GENERATE_PLOT = False #True
 NUM_RUNS = 30
-DATA_TYPES = [2]
+DATA_TYPES = [1]
 
 NUM_TRAIN = 100
 NUM_FEATURES = 20
@@ -27,20 +27,12 @@ MAX_BEST_COST = 1e10
 
 COARSE_LAMBDAS = [1e-4, 1e-3, 1e-2, 1e-1, 1, 10]
 
-RUN_HC = False
 RUN_GRIDSEARCH_FULL = False
-RUN_GRIDSEARCH_2PENALTIES = False
 RUN_NESTEROV = False
-
 RUN_HC = True
-RUN_GRIDSEARCH_2PENALTIES = True
-# RUN_NESTEROV = True
-# RUN_GRIDSEARCH_FULL = True
+RUN_GRIDSEARCH_2PENALTIES = False #True
 
-NUM_LAMBDAS = 3
-
-seed = int(np.random.rand() * 1e15)
-# seed = 15066788547751
+seed = int(np.random.rand() * 1e5)
 print "numpy rand seed", seed
 np.random.seed(seed)
 

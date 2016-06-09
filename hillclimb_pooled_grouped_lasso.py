@@ -15,6 +15,7 @@ MIN_SHRINK = 1e-15
 MIN_METHOD_STEP = 1e-10
 MIN_LAMBDA = 1e-10
 DEFAULT_LAMBDA = 1e-4
+BACKTRACK_ALPHA = 1e-2
 
 def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_lambda1=DEFAULT_LAMBDA):
     method_step_size = STEP_SIZE
@@ -47,7 +48,7 @@ def run(X_train, y_train, X_validate, y_validate, group_feature_sizes, initial_l
             print "value error", e
             pot_cost = 1e10
 
-        while pot_cost >= best_cost and shrink_factor > MIN_SHRINK:
+        while pot_cost > best_cost - BACKTRACK_ALPHA * shrink_factor * method_step_size * np.linalg.norm(lambda_derivatives)**2 and shrink_factor > MIN_SHRINK:
             shrink_factor *= SHRINK_SHRINK
             pot_lambdas = _get_updated_lambdas(curr_regularizations, shrink_factor * method_step_size, lambda_derivatives)
             pot_betas = problem_wrapper.solve(pot_lambdas)

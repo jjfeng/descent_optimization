@@ -33,15 +33,15 @@ W_CORR = 0.9
 CLOSE_TO_ZERO_THRESHOLD = 1e-4
 
 def testerror(X, y, b):
-    return 0.5 * np.linalg.norm(y - X * b)
+    return 0.5 * get_norm2(y - X * b, power=2)
 
 def testerror_interactions(X, W, y, b, t):
-    return 0.5 * np.linalg.norm(y - X * b - W * t)
+    return 0.5 * get_norm2(y - X * b - W * t, power=2)
 
 def testerror_grouped(X, y, betas):
     complete_beta = np.concatenate(betas)
     diff = y - X * complete_beta
-    return 0.5 / y.size * np.linalg.norm(diff)
+    return 0.5 / y.size * get_norm2(diff, power=2)
 
 def testerror_logistic_grouped(X, y, betas):
     complete_beta = np.concatenate(betas)
@@ -68,7 +68,7 @@ def testerror_logistic_grouped(X, y, betas):
 
 def testerror_smooth_and_linear(X_linear, y, beta, thetas):
     err = np.linalg.norm(y - X_linear * beta - thetas)
-    return 0.5 * np.linalg.norm(err)
+    return 0.5 * get_norm2(err, power=2)
 
 def testerror_multi_smooth(y, test_indices, thetas):
     err = y - np.sum(thetas[test_indices], axis=1)
