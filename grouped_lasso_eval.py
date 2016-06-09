@@ -61,10 +61,7 @@ def main(argv):
         COARSE_LAMBDA1S = [1, 1e-1]
         print "RUN POOLED FOR GS and HC"
     else:
-        if TOTAL_FEATURES == 300:
-            COARSE_LAMBDA1S = [10, 1, 1e-1]
-        else:
-            COARSE_LAMBDA1S = [1, 1e-1]
+        COARSE_LAMBDA1S = [1, 1e-1]
         print "UNPOOLED VS. POOLED"
 
     seed = np.random.randint(0, 1e5)
