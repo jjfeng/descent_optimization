@@ -239,15 +239,14 @@ class GroupedLassoProblemWrapperSimple:
         self.lambda1.value = lambdas[0]
         self.lambda2.value = lambdas[1]
 
-        # result = self.problem.solve(solver=SCS, verbose=VERBOSE)
         if high_accur:
             tol = 1e-6
             ecos_iters = 200
             try:
-                self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL, abstol_inacc=tol, reltol_inacc=tol, max_iters=ecos_iters)
+                self.problem.solve(solver=ECOS, verbose=VERBOSE, reltol=tol, abstol_inacc=tol, reltol_inacc=tol, max_iters=ecos_iters)
             except SolverError:
                 print "switching to SCS!"
-                self.problem.solve(solver=SCS, verbose=VERBOSE, eps=SCS_HIGH_ACC_EPS/100, max_iters=SCS_MAX_ITERS * 4, use_indirect=False, normalize=False, warm_start=True)
+                self.problem.solve(solver=SCS, verbose=VERBOSE, eps=SCS_HIGH_ACC_EPS, max_iters=SCS_MAX_ITERS, use_indirect=False, normalize=False, warm_start=True)
         else:
             self.problem.solve(solver=SCS, verbose=VERBOSE)
         return [b.value for b in self.betas]
