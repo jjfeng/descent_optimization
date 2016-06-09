@@ -86,7 +86,6 @@ def main(argv):
             assert(data_type in [0, 1, 2])
 
     seed = int(np.random.rand() * 1e5)
-    seed = 31288
     print "numpy rand seed", seed
     np.random.seed(seed)
 
