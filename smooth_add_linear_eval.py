@@ -1,4 +1,5 @@
 import sys
+import getopt
 import matplotlib.pyplot as plt
 import time
 import cvxpy
@@ -11,7 +12,6 @@ import gridsearch_smooth_add_linear as gs
 
 GENERATE_PLOT = False #True
 NUM_RUNS = 30
-DATA_TYPES = [1]
 
 NUM_TRAIN = 100
 NUM_FEATURES = 20
@@ -30,11 +30,7 @@ COARSE_LAMBDAS = [1e-4, 1e-3, 1e-2, 1e-1, 1, 10]
 RUN_GRIDSEARCH_FULL = False
 RUN_NESTEROV = False
 RUN_HC = True
-RUN_GRIDSEARCH_2PENALTIES = False #True
-
-seed = int(np.random.rand() * 1e5)
-print "numpy rand seed", seed
-np.random.seed(seed)
+RUN_GRIDSEARCH_2PENALTIES = True
 
 def _hillclimb_coarse_grid_search(optimization_func, *args, **kwargs):
     start_time = time.time()
@@ -71,13 +67,28 @@ def _hillclimb_coarse_grid_search(optimization_func, *args, **kwargs):
     print "runtime", end_time - start_time
     return best_beta, best_thetas, best_cost_path, end_time - start_time
 
-
 def _get_ordered_Xl_y_data(Xl, Xs, y):
     indices = np.argsort(np.reshape(np.array(Xs), Xs.size), axis=0)
     return Xl[indices, :], y[indices]
 
+def main(argv):
+    try:
+        opts, args = getopt.getopt(argv,"d:p")
+    except getopt.GetoptError:
+        print "BAD REQUEST"
+        print "accepts a folder name. reads the XML files inside"
+        sys.exit(2)
 
-for data_type in DATA_TYPES:
+    RUN_HC_POOLED = False
+    for opt, arg in opts:
+        if opt == '-d':
+            data_type = int(arg)
+            assert(data_type in [0, 1, 2])
+
+    seed = int(np.random.rand() * 1e5)
+    print "numpy rand seed", seed
+    np.random.seed(seed)
+
     hc_results = MethodResults("Hillclimb")
     hc_nesterov_results = MethodResults("Hillclimb_NESTEROV")
     gs_results = MethodResults("Gridsearch")
@@ -203,3 +214,6 @@ for data_type in DATA_TYPES:
                 plt.ylabel("Validation Cost")
                 plt.legend(fontsize="x-small")
                 plt.savefig("figures/smooth_linear_cost_path_%d_%d_%d_%d.png" % (data_type, NUM_TRAIN, NUM_FEATURES, NUM_NONZERO_FEATURES))
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
