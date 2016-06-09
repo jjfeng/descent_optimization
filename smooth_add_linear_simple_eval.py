@@ -9,7 +9,7 @@ from data_generation import smooth_plus_linear
 import hillclimb_smooth_add_linear_lasso as hc
 import gridsearch_smooth_add_linear as gs
 
-GENERATE_PLOT = True
+GENERATE_PLOT = False# True
 NUM_RUNS = 30
 DATA_TYPES = [1]
 
@@ -105,8 +105,8 @@ for data_type in DATA_TYPES:
             continue
         hc_results.append(_create_method_result(hc_beta, hc_thetas, runtime))
 
-        hc_nesterov_beta, hc_nesterov_thetas, hc_nesterov_cost_path, runtime = _hillclimb_coarse_grid_search(hc.run_nesterov, Xl_train, Xs_train, y_train, Xl_validate, Xs_validate, y_validate, Xs_test)
-        hc_nesterov_results.append(_create_method_result(hc_nesterov_beta, hc_nesterov_thetas, runtime))
+        # hc_nesterov_beta, hc_nesterov_thetas, hc_nesterov_cost_path, runtime = _hillclimb_coarse_grid_search(hc.run_nesterov, Xl_train, Xs_train, y_train, Xl_validate, Xs_validate, y_validate, Xs_test)
+        # hc_nesterov_results.append(_create_method_result(hc_nesterov_beta, hc_nesterov_thetas, runtime))
 
         start_time = time.time()
         gs_beta, gs_thetas, gs_best_cost = gs.run_simple(Xl_train, Xs_train, y_train, Xl_validate, Xs_validate, y_validate, Xs_test, use_l1=False)

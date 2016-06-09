@@ -29,7 +29,7 @@ ZERO_THRESHOLD = 0.5 * 1e-4
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv,"m:d:p")
+        opts, args = getopt.getopt(argv,"d:p")
     except getopt.GetoptError:
         print "BAD REQUEST"
         print "accepts a folder name. reads the XML files inside"
@@ -37,9 +37,7 @@ def main(argv):
 
     RUN_HC_POOLED = False
     for opt, arg in opts:
-        if opt == '-m':
-            NUM_GROUPS = int(arg)
-        elif opt == '-d':
+        if opt == '-d':
             data_type = int(arg)
             if data_type == 1:
                 TRAIN_SIZE = 60
@@ -75,6 +73,7 @@ def main(argv):
     print "TRAIN_SIZE", TRAIN_SIZE
     print "TOTAL_FEATURES", TOTAL_FEATURES
     print "NUM_GROUPS", NUM_GROUPS
+    print "COARSE_LAMBDA1S", COARSE_LAMBDA1S
 
     def _hillclimb_coarse_grid_search(optimization_func, *args, **kwargs):
         start_time = time.time()
