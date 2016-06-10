@@ -10,21 +10,10 @@ import hillclimb_grouped_lasso as hc
 import hillclimb_pooled_grouped_lasso as hc_pooled
 import gridsearch_grouped_lasso
 
-GENERATE_PLOT = False #True
+GENERATE_PLOT = False
 NUM_RUNS = 30
 
-# a new test?
 TRUE_NUM_GROUPS = 3
-
-# TOTAL_FEATURES = 1500
-# TRUE_NUM_GROUPS = 3
-# NUM_GROUPS = 50 # 150?
-
-# TRAIN_SIZE = 60
-# TOTAL_FEATURES = 300
-# TRUE_NUM_GROUPS = 3
-# NUM_GROUPS = 30
-
 ZERO_THRESHOLD = 0.5 * 1e-4
 
 def main(argv):
