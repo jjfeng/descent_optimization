@@ -106,7 +106,7 @@ def get_grouped_betas(beta, feature_group_sizes):
 
 
 def main():
-    seed = int(np.random.rand() * 1e15)
+    seed = int(np.random.rand() * 1e5)
     print "seed", seed
     np.random.seed(seed)
 
@@ -125,52 +125,41 @@ def main():
         feature_group_sizes = [Xg.shape[1] for Xg in X_groups_train_validate]
         X_test = np.hstack(X_groups_test)
 
-        for j in range(0, 3):
-            start = time.time()
-            hc_complete_beta, hc_validate_cost, hc_cost_path = hc.run_for_lambdas(X_groups_train_validate, y_train_validate, feature_group_sizes, KFOLDS, init_lambdas=INIT_LAMBDAS)
-            hc_betas = get_grouped_betas(hc_complete_beta, feature_group_sizes)
-            hc_runtime = time.time() - start
-            hc_nonzeros = get_num_nonzero_betas(hc_betas, genesets, threshold=1e-6)
-            print "hc 1e-6", hc_nonzeros
+        start = time.time()
+        hc_complete_beta, hc_validate_cost, hc_cost_path = hc.run_for_lambdas(X_groups_train_validate, y_train_validate, feature_group_sizes, KFOLDS, init_lambdas=INIT_LAMBDAS)
+        hc_betas = get_grouped_betas(hc_complete_beta, feature_group_sizes)
+        hc_runtime = time.time() - start
+        hc_nonzeros = get_num_nonzero_betas(hc_betas, genesets, threshold=1e-6)
+        print "hc 1e-6", hc_nonzeros
 
-            hc_test, hc_rate = testerror_logistic_grouped(X_test, y_test, hc_betas)
-            print "hc_test", hc_test, "hc_rate", hc_rate
-            hc_results.append(MethodResult(test_err=hc_test, validation_err=hc_validate_cost, sensitivity=hc_rate, runtime=hc_runtime))
-            hc_results.print_results()
+        hc_test, hc_rate = testerror_logistic_grouped(X_test, y_test, hc_betas)
+        print "hc_test", hc_test, "hc_rate", hc_rate
+        hc_results.append(MethodResult(test_err=hc_test, validation_err=hc_validate_cost, sensitivity=hc_rate, runtime=hc_runtime))
+        hc_results.print_results()
 
-        # start = time.time()
-        # gs_grouped_complete_beta, gs_grouped_validate_cost = gs_grouped.run_classify_fullcv(X_groups_train_validate, y_train_validate, feature_group_sizes, KFOLDS)
-        # gs_grouped_betas = get_grouped_betas(gs_grouped_complete_beta, feature_group_sizes)
-        # gs_grouped_runtime = time.time() - start
-        # gs_grouped_nonzeros = get_num_nonzero_betas(gs_grouped_betas, genesets, threshold=1e-6)
-        # print "gs_grouped 1e-6", gs_grouped_nonzeros
-        #
-        # start = time.time()
-        # gs_complete_beta, gs_validate_cost = gs.run_classify_fullcv(X_groups_train_validate, y_train_validate, feature_group_sizes, KFOLDS)
-        # gs_betas = get_grouped_betas(gs_complete_beta, feature_group_sizes)
-        # gs_runtime = time.time() - start
-        # gs_nonzeros = get_num_nonzero_betas(gs_betas, genesets, threshold=1e-6)
-        # print "gs 1e-6", gs_nonzeros
-        #
-        # print "================= hc ======================"
-        # hc_test, hc_rate = testerror_logistic_grouped(X_test, y_test, hc_betas)
-        # print "hc_test", hc_test, "hc_rate", hc_rate
-        # hc_results.append(MethodResult(test_err=hc_test, validation_err=hc_validate_cost, sensitivity=hc_rate, runtime=hc_runtime))
-        #
-        # print "================= gs grouped ======================"
-        # gs_grouped_test, gs_grouped_rate = testerror_logistic_grouped(X_test, y_test, gs_grouped_betas)
-        # print "gs_grouped_test", gs_grouped_test, "gs_grouped_rate", gs_grouped_rate
-        # gs_grouped_results.append(MethodResult(test_err=gs_grouped_test, validation_err=gs_grouped_validate_cost, sensitivity=gs_grouped_rate, runtime=gs_grouped_runtime))
-        #
-        # print "================= gs ======================"
-        # gs_test, gs_rate = testerror_logistic_grouped(X_test, y_test, gs_betas)
-        # print "gs_test", gs_test, "gs_rate", gs_rate
-        # gs_results.append(MethodResult(test_err=gs_test, validation_err=gs_validate_cost, sensitivity=gs_rate, runtime=gs_runtime))
-        #
-        # print "ITERATION", i
-        # hc_results.print_results()
-        # gs_grouped_results.print_results()
-        # gs_results.print_results()
+        start = time.time()
+        gs_grouped_complete_beta, gs_grouped_validate_cost = gs_grouped.run_classify_fullcv(X_groups_train_validate, y_train_validate, feature_group_sizes, KFOLDS)
+        gs_grouped_betas = get_grouped_betas(gs_grouped_complete_beta, feature_group_sizes)
+        gs_grouped_runtime = time.time() - start
+        gs_grouped_nonzeros = get_num_nonzero_betas(gs_grouped_betas, genesets, threshold=1e-6)
+        print "gs_grouped 1e-6", gs_grouped_nonzeros
+        
+        #start = time.time()
+        #gs_complete_beta, gs_validate_cost = gs.run_classify_fullcv(X_groups_train_validate, y_train_validate, feature_group_sizes, KFOLDS)
+        #gs_betas = get_grouped_betas(gs_complete_beta, feature_group_sizes)
+        #gs_runtime = time.time() - start
+        #gs_nonzeros = get_num_nonzero_betas(gs_betas, genesets, threshold=1e-6)
+        #print "gs 1e-6", gs_nonzeros
+        
+        print "================= gs grouped ======================"
+        gs_grouped_test, gs_grouped_rate = testerror_logistic_grouped(X_test, y_test, gs_grouped_betas)
+        print "gs_grouped_test", gs_grouped_test, "gs_grouped_rate", gs_grouped_rate
+        gs_grouped_results.append(MethodResult(test_err=gs_grouped_test, validation_err=gs_grouped_validate_cost, sensitivity=gs_grouped_rate, runtime=gs_grouped_runtime))
+        
+        print "ITERATION", i
+        hc_results.print_results()
+        #gs_grouped_results.print_results()
+        gs_results.print_results()
 
 
 if __name__ == "__main__":
