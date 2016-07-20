@@ -1,0 +1,9 @@
+{
+"lambda": {
+ "name": "lambda",
+ "type": "float",
+ "size": 2,
+ "min":  0.0001,
+ "max":  100
+}
+}

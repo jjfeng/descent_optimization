@@ -1,0 +1,9 @@
+{
+"log_lambda": {
+ "name": "log_lambda",
+ "type": "float",
+ "size": 30,
+ "min":  -6,
+ "max":  2
+}
+}
