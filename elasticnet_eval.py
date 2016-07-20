@@ -5,11 +5,12 @@ import data_generation
 import hillclimb_elasticnet_lambda12 as hc
 import hillclimb_elasticnet_lambda_alpha
 import gridsearch_elasticnet_lambda12
+import neldermead_elasticnet as nm
 from method_results import MethodResult
 from method_results import MethodResults
 
 GENERATE_PLOT = False #True
-NUM_RUNS = 30
+NUM_RUNS = 1 # 30
 
 SIGNAL_NOISE_RATIO = 2
 
@@ -25,6 +26,7 @@ COARSE_LAMBDA_GRID = [1e-2, 1e1]
 NUM_RANDOM_LAMBDAS = 3
 
 seed = int(np.random.rand() * 1e5)
+seed = 10
 np.random.seed(seed)
 print "SEED", seed
 
@@ -56,6 +58,7 @@ hc_lambda_alpha_results = MethodResults(HC_LAMBDA_ALPHA_LABEL)
 hc_lambda_alpha_results1 = MethodResults(HC_LAMBDA_ALPHA_LABEL + "_SHRINK")
 hc_lambda_alpha_dim_results = MethodResults(HC_LAMBDA_ALPHA_DIM_LABEL)
 hc_lambda_alpha_nesterov_results = MethodResults(HC_LAMBDA_ALPHA_NESTEROV_LABEL)
+nm_results = MethodResults("NELDER-MEAD")
 gs_results = MethodResults(GS_LAMBDA12_LABEL)
 for i in range(0, NUM_RUNS):
     beta_real, X_train, y_train, X_validate, y_validate, X_test, y_test = data_generation.correlated(
@@ -86,11 +89,15 @@ for i in range(0, NUM_RUNS):
     # hc_lambda_alpha_nesterov_beta_guess, _ = hillclimb_elasticnet_lambda_alpha.run_nesterov(X_train, y_train, X_validate, y_validate)
     # hc_lambda_alpha_nesterov_results.append_test_beta_err(_get_test_beta_err(hc_lambda_alpha_nesterov_beta_guess))
 
-    start = time.time()
-    gs_beta_guess = gridsearch_elasticnet_lambda12.run(X_train, y_train, X_validate, y_validate)
-    runtime = time.time() - start
-    gs_method_result = _create_method_result(gs_beta_guess, runtime)
-    gs_results.append(gs_method_result)
+    nm_beta_guess, runtime = nm.run(X_train, y_train, X_validate, y_validate)
+    nm_method_result = _create_method_result(nm_beta_guess, runtime)
+    nm_results.append(nm_method_result)
+
+    # start = time.time()
+    # gs_beta_guess = gridsearch_elasticnet_lambda12.run(X_train, y_train, X_validate, y_validate)
+    # runtime = time.time() - start
+    # gs_method_result = _create_method_result(gs_beta_guess, runtime)
+    # gs_results.append(gs_method_result)
 
     print "NUM RUN", i
     print "NUM FEATURES", NUM_FEATURES
@@ -104,6 +111,7 @@ for i in range(0, NUM_RUNS):
     # hc_lambda_alpha_results1.print_results()
     # hc_lambda_alpha_dim_results.print_results()
     # hc_lambda_alpha_nesterov_results.print_results()
+    nm_results.print_results()
     gs_results.print_results()
 
     if GENERATE_PLOT and i == 0:

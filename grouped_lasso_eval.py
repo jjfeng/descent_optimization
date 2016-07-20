@@ -8,10 +8,11 @@ from method_results import MethodResult
 from data_generation import sparse_groups
 import hillclimb_grouped_lasso as hc
 import hillclimb_pooled_grouped_lasso as hc_pooled
+import neldermead_grouped_lasso as nm
 import gridsearch_grouped_lasso
 
 GENERATE_PLOT = False
-NUM_RUNS = 30
+NUM_RUNS = 1 # 30
 
 TRUE_NUM_GROUPS = 3
 ZERO_THRESHOLD = 0.5 * 1e-4
@@ -53,6 +54,7 @@ def main(argv):
         print "UNPOOLED VS. POOLED"
 
     seed = np.random.randint(0, 1e5)
+    seed = 10
     np.random.seed(seed)
     print "RANDOM SEED", seed
     print "TRAIN_SIZE", TRAIN_SIZE
@@ -86,6 +88,7 @@ def main(argv):
     hc_nesterov_results = MethodResults("NESTEROV")
     hc_pooled_results = MethodResults(HC_GROUPED_LASSO_LABEL + "_POOLED")
     hc_pooled_nesterov_results = MethodResults("NESTEROV_POOLED")
+    nm_results = MethodResults("NELDER_MEAD")
     gs_results = MethodResults(GS_GROUPED_LASSO_LABEL)
 
     for i in range(0, NUM_RUNS):
@@ -117,6 +120,9 @@ def main(argv):
             # hc_nesterov_beta_guesses, hc_nesterov_costpath, runtime = _hillclimb_coarse_grid_search(hc.run_nesterov, X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
             # hc_nesterov_results.append(_create_method_result(hc_nesterov_beta_guesses, runtime))
 
+        nm_beta_guesses, runtime = nm.run(X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
+        nm_results.append(_create_method_result(nm_beta_guesses, runtime))
+
         start = time.time()
         gs_beta_guesses, gs_lowest_cost = gridsearch_grouped_lasso.run(X_train, y_train, X_validate, y_validate, EXPERT_KNOWLEDGE_GROUP_FEATURE_SIZES)
         runtime = time.time() - start
@@ -129,9 +135,11 @@ def main(argv):
 
         if RUN_HC_POOLED:
             hc_pooled_results.print_results()
+            nm_results.print_results()
             hc_pooled_nesterov_results.print_results()
         else:
             hc_results.print_results()
+            nm_results.print_results()
             hc_nesterov_results.print_results()
         gs_results.print_results()
 
