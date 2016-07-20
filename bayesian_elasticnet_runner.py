@@ -8,7 +8,7 @@ import data_generation
 from common import *
 from convexopt_solvers import Lambda12ProblemWrapper
 
-NUM_RUNS = 15
+NUM_RUNS = 30
 RESULT_FOLDER = "spearmint_descent/bayesian_elasticnet"
 RESULT_FILE = "%s/results.dat" % RESULT_FOLDER
 
@@ -37,7 +37,6 @@ def run(X_train, y_train, X_validate, y_validate):
                 dur = values.pop(0)
                 lambda1 = 10**float(values[0])
                 lambda2 = 10**float(values[1])
-                print "lambda12", lambda1, lambda2
                 if (val == 'P'):
                     # P means pending experiment to run
                     # Run experiment
@@ -59,5 +58,6 @@ def run(X_train, y_train, X_validate, y_validate):
         with open(RESULT_FILE,'w') as resfile:
             resfile.writelines(newlines)
 
+    # VERY IMPORTANT to clean spearmint results
     run_spearmint_clean(RESULT_FOLDER)
     return best_betas, total_time

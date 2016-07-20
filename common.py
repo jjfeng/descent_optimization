@@ -33,14 +33,6 @@ W_CORR = 0.9
 
 CLOSE_TO_ZERO_THRESHOLD = 1e-4
 
-def run_spearmint_command(experiment_folder, gridsize=20000):
-    cmd = "python spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d --method-args=use_multiprocessing=0" % gridsize
-    os.system("%s %s" % (cmd, experiment_folder))
-
-def run_spearmint_clean(experiment_folder):
-    cmd = "rm %s/chooser* %s/results.dat" % (experiment_folder, experiment_folder)
-    os.system(cmd)
-
 def testerror(X, y, b):
     return 0.5 * get_norm2(y - X * b, power=2)
 
@@ -90,6 +82,14 @@ def get_nonzero_indices(some_vector, threshold=CLOSE_TO_ZERO_THRESHOLD):
 
 def get_norm2(vector, power=1):
     return np.power(np.linalg.norm(vector, ord=None), power)
+
+def run_spearmint_command(experiment_folder, gridsize=20000):
+    cmd = "python spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d --method-args=use_multiprocessing=0" % gridsize
+    os.system("%s %s" % (cmd, experiment_folder))
+
+def run_spearmint_clean(experiment_folder):
+    cmd = "rm %s/chooser* %s/results.dat" % (experiment_folder, experiment_folder)
+    os.system(cmd)
 
 #### RANDOM TESTS
 

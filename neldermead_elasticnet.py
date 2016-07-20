@@ -23,6 +23,8 @@ def run(X_train, y_train, X_validate, y_validate, diminishing_step_size=False, i
 
     runtime = time.time() - start
 
+    print "NELDERMEAD: best lambda", res.x
+    print "NELDERMEAD: total calls", res.nfev
     best_beta = problem_wrapper.solve(res.x[0], res.x[1])
 
     return best_beta, runtime

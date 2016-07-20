@@ -1,3 +1,4 @@
+import sys
 import time
 import matplotlib.pyplot as plt
 from common import *
@@ -95,9 +96,9 @@ for i in range(0, NUM_RUNS):
     nm_method_result = _create_method_result(nm_beta_guess, runtime)
     nm_results.append(nm_method_result)
 
-    bs_beta_guess, runtime = bs.run(X_train, y_train, X_validate, y_validate)
-    bs_method_result = _create_method_result(bs_beta_guess, runtime)
-    bs_results.append(bs_method_result)
+    # bs_beta_guess, runtime = bs.run(X_train, y_train, X_validate, y_validate)
+    # bs_method_result = _create_method_result(bs_beta_guess, runtime)
+    # bs_results.append(bs_method_result)
 
     # start = time.time()
     # gs_beta_guess = gridsearch_elasticnet_lambda12.run(X_train, y_train, X_validate, y_validate)
@@ -118,8 +119,9 @@ for i in range(0, NUM_RUNS):
     # hc_lambda_alpha_dim_results.print_results()
     # hc_lambda_alpha_nesterov_results.print_results()
     nm_results.print_results()
-    bs_results.print_results()
-    gs_results.print_results()
+    # bs_results.print_results()
+    # gs_results.print_results()
+    sys.stdout.flush()
 
     if GENERATE_PLOT and i == 0:
         plt.clf()
