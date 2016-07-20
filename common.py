@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 TRAIN_TO_VALIDATE_RATIO = 4
@@ -31,6 +32,10 @@ X_CORR = 0
 W_CORR = 0.9
 
 CLOSE_TO_ZERO_THRESHOLD = 1e-4
+
+def run_spearmint_command(result_file, experiment_folder, gridsize=20000):
+    cmd = "python spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d --method-args=use_multiprocessing=0 --results=%s" % (gridsize, result_file)
+    os.system("%s %s" % (cmd, experiment_folder))
 
 def testerror(X, y, b):
     return 0.5 * get_norm2(y - X * b, power=2)

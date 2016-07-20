@@ -6,11 +6,12 @@ import hillclimb_elasticnet_lambda12 as hc
 import hillclimb_elasticnet_lambda_alpha
 import gridsearch_elasticnet_lambda12
 import neldermead_elasticnet as nm
+import bayesian_elasticnet_runner as bs
 from method_results import MethodResult
 from method_results import MethodResults
 
 GENERATE_PLOT = False #True
-NUM_RUNS = 1 # 30
+NUM_RUNS = 30
 
 SIGNAL_NOISE_RATIO = 2
 
@@ -59,6 +60,7 @@ hc_lambda_alpha_results1 = MethodResults(HC_LAMBDA_ALPHA_LABEL + "_SHRINK")
 hc_lambda_alpha_dim_results = MethodResults(HC_LAMBDA_ALPHA_DIM_LABEL)
 hc_lambda_alpha_nesterov_results = MethodResults(HC_LAMBDA_ALPHA_NESTEROV_LABEL)
 nm_results = MethodResults("NELDER-MEAD")
+bs_results = MethodResults("BAYES_SPEARMINT")
 gs_results = MethodResults(GS_LAMBDA12_LABEL)
 for i in range(0, NUM_RUNS):
     beta_real, X_train, y_train, X_validate, y_validate, X_test, y_test = data_generation.correlated(
@@ -93,6 +95,10 @@ for i in range(0, NUM_RUNS):
     nm_method_result = _create_method_result(nm_beta_guess, runtime)
     nm_results.append(nm_method_result)
 
+    bs_beta_guess, runtime = bs.run(X_train, y_train, X_validate, y_validate)
+    bs_method_result = _create_method_result(bs_beta_guess, runtime)
+    bs_results.append(bs_method_result)
+
     # start = time.time()
     # gs_beta_guess = gridsearch_elasticnet_lambda12.run(X_train, y_train, X_validate, y_validate)
     # runtime = time.time() - start
@@ -112,6 +118,7 @@ for i in range(0, NUM_RUNS):
     # hc_lambda_alpha_dim_results.print_results()
     # hc_lambda_alpha_nesterov_results.print_results()
     nm_results.print_results()
+    bs_results.print_results()
     gs_results.print_results()
 
     if GENERATE_PLOT and i == 0:

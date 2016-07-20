@@ -3,8 +3,8 @@ import scipy as sp
 from common import *
 from convexopt_solvers import Lambda12ProblemWrapper
 
-NUMBER_OF_ITERATIONS = 60
-STEP_SIZE = 0.4
+NUMBER_OF_ITERATIONS = 30 #60
+STEP_SIZE = 1 # 0.4
 DIMINISHING_STEP_ALPHA = 1.0
 LAMBDA_MIN = 1e-5
 
