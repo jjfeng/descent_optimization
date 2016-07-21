@@ -536,3 +536,78 @@ class GenAddModelProblemWrapper:
         print "diff", np.abs(total_train_cost - train_loss - sum(penalties) - tiny_e_cost)
         assert(np.abs(total_train_cost - train_loss - sum(penalties) - tiny_e_cost)/total_train_cost < 0.05)
         return total_train_cost, train_loss, penalties, tiny_e_cost
+
+class SparseAdditiveModelProblemWrapper:
+    def __init__(self, X, train_indices, y, tiny_e=0):
+        self.tiny_e = tiny_e
+        self.y = y
+
+        num_samples, num_features = X.shape
+        self.num_samples = num_samples
+        self.num_features = num_features
+
+        # Create smooth penalty matrix for each feature
+        self.diff_matrices = []
+        for i in range(num_features):
+            D = _make_discrete_diff_matrix_ord2(X[:,i])
+            self.diff_matrices.append(D)
+
+        self.train_indices = train_indices
+        self.train_identifier = np.matrix(np.zeros((len(train_indices), num_samples)))
+        self.num_train = len(train_indices)
+        self.train_identifier[np.arange(self.num_train), train_indices] = 1
+
+    # @param high_accur: for gradient descent on the validation errors, getting the optimal solution is super important.
+    # We need it in order to have an accurate gradient for validation loss wrt lambdas
+    # as dimension of the solution vector increases, the number of iterations of SCS is necessary!
+    def solve(self, lambdas, high_accur=True, warm_start=True):
+        thetas = Variable(self.num_samples, self.num_features)
+        objective = 0.5/self.num_train * sum_squares(self.y - sum_entries(thetas[self.train_indices,:], axis=1))
+        for i in range(len(lambdas)):
+            D = sp.sparse.coo_matrix(self.diff_matrices[i])
+            D_sparse = cvxopt.spmatrix(D.data, D.row.tolist(), D.col.tolist())
+            objective += 0.5/self.num_samples * lambdas[i] * norm(D_sparse * thetas[:,i], 1)
+        # objective += 0.5 * self.tiny_e/(self.num_features * self.num_samples) * sum_squares(thetas)
+        self.problem = Problem(Minimize(objective))
+        if high_accur:
+            eps = SCS_HIGH_ACC_EPS
+            max_iters = SCS_MAX_ITERS * 4 * self.num_features # 5 * num_features
+        else:
+            eps = SCS_EPS
+            max_iters = SCS_MAX_ITERS * 2
+
+        # Don't use ECOS/ECOS_BB - for some reason, it's not finding good minimizers of the fcn. Even though the gradient of the training loss
+        # does reach zero, it doesn't match the calculated gradient for some reason. My guess is that ECOS is getting stuck somewhere.
+        # Ignoring that, it seems to just change on reg parameter and ignore the other ones.
+        #### HUHHHH NOW ITS WORKING?! WTF.
+
+        # Using indirect does not work - bad derivatives! Not normalizing is also better - bigger changes.
+        try:
+            self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL)
+        except SolverError:
+            print "switching to SCS!"
+            self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
+
+        print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
+        self.lambdas = lambdas
+        self.thetas = thetas.value
+        return thetas.value
+
+    def get_cost_components(self):
+        assert(False)
+
+def _make_discrete_diff_matrix_ord2(x_features):
+    num_samples = len(x_features)
+    d1_matrix = np.zeros((num_samples, num_samples))
+    # 1st, figure out ordering of samples for the feature
+    sample_ordering = np.argsort(x_features)
+    ordered_x = x_features[sample_ordering]
+    d1_matrix[range(num_samples - 1), sample_ordering[:-1]] = -1
+    d1_matrix[range(num_samples - 1), sample_ordering[1:]] = 1
+    inv_dists = 1.0 / (ordered_x[np.arange(1, num_samples)] - ordered_x[np.arange(num_samples - 1)])
+    inv_dists = np.append(inv_dists, 0)
+
+    # Check that the inverted distances are all greater than zero
+    assert(np.min(inv_dists) >= 0)
+    D = d1_matrix * np.matrix(np.diagflat(inv_dists)) * d1_matrix
+    return D

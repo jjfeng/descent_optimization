@@ -70,6 +70,10 @@ def testerror_logistic_grouped(X, y, betas):
 def testerror_smooth_and_linear(X_linear, y, beta, thetas):
     return 0.5 * get_norm2(y - X_linear * beta - thetas, power=2)
 
+def testerror_sparse_add_smooth(y, test_indices, thetas):
+    err = y - np.sum(thetas[test_indices, :], axis=1)
+    return 0.5/y.size * get_norm2(err, power=2)
+
 def testerror_multi_smooth(y, test_indices, thetas):
     err = y - np.sum(thetas[test_indices], axis=1)
     return 0.5/y.size * get_norm2(err, power=2)

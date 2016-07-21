@@ -3,7 +3,6 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-from convexopt_solvers import GenAddModelProblemWrapper
 from data_generation import multi_smooth_features
 
 from gen_add_model_hillclimb import GenAddModelHillclimb
