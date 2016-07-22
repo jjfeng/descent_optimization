@@ -2,6 +2,7 @@ class Fitted_Model:
     # @param: init_lambdas, a np matrix
     # @param: init_model_params, a tuple of model params
     def __init__(self, lambdas, model_params, cost):
+        self.num_lambdas = lambdas.size
         self.init_lambdas = lambdas
         self.lambda_history = [lambdas]
         self.model_param_history = [model_params]

@@ -51,7 +51,6 @@ class Gradient_Descent_Algo:
                 print "COST IS INCREASING!", potential_cost
                 break
             else:
-                print "updateeee!"
                 self.fmodel.update(potential_lambdas, potential_model_params, potential_cost)
 
                 print self.method_label, "iter:", i, "step_size", step_size
