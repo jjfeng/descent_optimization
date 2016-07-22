@@ -52,38 +52,32 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         return dloss_dlambda.A1 # flatten the matrix
 
     def _get_dtheta_dlambda(self, nonzero_thetas_idx):
+        nonzero_thetas = self.fmodel.current_model_params[:, nonzero_thetas_idx]
+
         def create_b_diag_elem(i):
             # theta = self.fmodel.current_model_params[:,i]
             theta = nonzero_thetas[:,i]
+            assert(theta.shape[0] == self.data.num_samples)
             theta_norm = np.linalg.norm(theta, 2)
-            if theta_norm < 1e-10:
-                return np.matrix(np.zeros((self.data.num_samples, self.data.num_samples)))
-            else:
-                print "np.eye(self.data.num_samples)", np.eye(self.data.num_samples)
-                print "theta", theta
-                print "theta * theta", theta * theta.T
-                print "theta_norm**2", theta_norm, theta_norm**2
-                b_diag_elem = 1/theta_norm * (np.eye(self.data.num_samples) - theta * theta.T/(theta_norm**2))
-                return b_diag_elem
+            b_diag_elem = 1.0/theta_norm * (np.eye(self.data.num_samples) - theta * theta.T/(theta_norm**2))
+            return b_diag_elem
 
         def normalize_theta(i):
             # theta = self.fmodel.current_model_params[:,i]
             theta = nonzero_thetas[:,i]
             print "theta", theta
             theta_norm = np.linalg.norm(theta, 2)
-            if theta_norm < 1e-10:
-                return np.zeros(theta.shape)
-            else:
-                return theta/theta_norm
+            return theta/theta_norm
 
         def make_diag_dtheta(i):
             # theta = self.fmodel.current_model_params[:,i]
             theta = nonzero_thetas[:,i]
             zeroed_thetas = self._zero_theta_indices(self.problem_wrapper.diff_matrices[i] * theta)
+            print "self.problem_wrapper.diff_matrices[i] * theta", self.problem_wrapper.diff_matrices[i] * theta
+            print "zeroed_thetas", zeroed_thetas
             dd_theta = self.problem_wrapper.diff_matrices[i].T * np.sign(zeroed_thetas)
             return dd_theta
 
-        nonzero_thetas = self.fmodel.current_model_params[:, nonzero_thetas_idx]
         num_nonzero_thetas = nonzero_thetas.shape[1]
         b_diag_elems = map(create_b_diag_elem, range(num_nonzero_thetas))
         print "b_diag_elems", b_diag_elems
@@ -154,3 +148,21 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
     @staticmethod
     def _zero_theta_indices(theta, threshold=1e-10):
         return np.multiply(theta, np.greater(np.abs(theta), threshold))
+
+    @staticmethod
+    def _get_zero_theta_indices(theta, threshold=1e-10):
+        return np.less(np.abs(theta), threshold).A1
+
+    @staticmethod
+    def _reformulate_theta_to_beta(theta, diff_matrix, eps=1e-10):
+        zero_theta_idx = self._get_zero_theta_indices(diff_matrix * theta)
+        inflatedD = np.zeros(diff_matrix.shape)
+        inflatedD[:np.sum(zero_theta_idx),:] = diff_matrix[zero_theta_idx,:]
+        u, s, v = sp.linalg.svd(inflatedD)
+        null_mask = (s <= eps)
+        null_space = sp.compress(null_mask, v, axis=0)
+        null_matrix = sp.transpose(null_space)
+        beta, res, _, _ = np.linalg.lstsq(null_matrix, theta)
+        # Check that we reformulated theta but it is still very close to the original theta
+        assert(res < eps)
+        return beta, null_matrix
