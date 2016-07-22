@@ -68,7 +68,7 @@ def main(argv):
     hc_results = MethodResults("Hillclimb")
 
     hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-    initial_lambdas = np.ones(num_funcs + num_zero_funcs)
+    initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
     hc_algo.run(initial_lambdas)
 
     print "===========RUN ============"

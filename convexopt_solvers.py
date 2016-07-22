@@ -563,10 +563,11 @@ class SparseAdditiveModelProblemWrapper:
     def solve(self, lambdas, high_accur=True, warm_start=True):
         thetas = Variable(self.num_samples, self.num_features)
         objective = 0.5/self.num_train * sum_squares(self.y - sum_entries(thetas[self.train_indices,:], axis=1))
-        for i in range(len(lambdas)):
+        objective += lambdas[0] * sum([norm(thetas[:,i], 2) for i in range(self.num_features)])
+        for i in range(len(self.diff_matrices)):
             D = sp.sparse.coo_matrix(self.diff_matrices[i])
             D_sparse = cvxopt.spmatrix(D.data, D.row.tolist(), D.col.tolist())
-            objective += 0.5/self.num_samples * lambdas[i] * norm(D_sparse * thetas[:,i], 1)
+            objective += 0.5/self.num_samples * lambdas[i + 1] * norm(D_sparse * thetas[:,i], 1)
         # objective += 0.5 * self.tiny_e/(self.num_features * self.num_samples) * sum_squares(thetas)
         self.problem = Problem(Minimize(objective))
         if high_accur:
@@ -588,7 +589,7 @@ class SparseAdditiveModelProblemWrapper:
             print "switching to SCS!"
             self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
 
-        print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
+        # print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
         self.lambdas = lambdas
         self.thetas = thetas.value
         return thetas.value

@@ -16,6 +16,7 @@ class ObservedData:
         self.num_train = y_train.size
         self.num_validate = y_validate.size
         self.num_test = y_test.size
+        self.num_samples = self.num_train + self.num_validate + self.num_test
 
         self.X_full = np.vstack((X_train, X_validate, X_test))
 

@@ -24,6 +24,7 @@ class Gradient_Descent_Algo:
 
         current_cost = self.get_validate_cost(model_params)
         self.fmodel = Fitted_Model(initial_lambdas, model_params, current_cost)
+        print "self.fmodel.current_cost", self.fmodel.current_cost
 
         step_size = self.step_size_init
         for i in range(0, self.num_iters):
@@ -45,12 +46,12 @@ class Gradient_Descent_Algo:
                     step_size,
                     lambda_derivatives
                 )
-                print "potential_new_regularization", potential_lambdas
 
             if self.fmodel.current_cost < potential_cost:
-                print "COST IS INCREASING!"
+                print "COST IS INCREASING!", potential_cost
                 break
             else:
+                print "updateeee!"
                 self.fmodel.update(potential_lambdas, potential_model_params, potential_cost)
 
                 print self.method_label, "iter:", i, "step_size", step_size
