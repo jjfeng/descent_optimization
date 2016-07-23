@@ -1,8 +1,5 @@
 import time
-import itertools
 import numpy as np
-import scipy as sp
-from common import *
 from scipy.optimize import minimize
 from fitted_model import Fitted_Model
 

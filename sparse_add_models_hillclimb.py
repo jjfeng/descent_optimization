@@ -33,7 +33,6 @@ class BetaForm:
 
         # Check that we reformulated theta but it is still very close to the original theta
         assert(res.size == 0 or res < self.eps)
-        print "reformualtion difference", np.linalg.norm(self.u * self.beta - self.theta, ord=2)
         assert(np.linalg.norm(self.u * self.beta - self.theta, ord=2) < self.eps)
 
     def __str__(self):
@@ -47,9 +46,9 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
     method_label = "Sparse_Add_Model_Hillclimb"
 
     def _create_descent_settings(self):
-        self.num_iters = 40
-        self.step_size_init = 1e-1
-        self.step_size_min = 1e-8
+        self.num_iters = 30
+        self.step_size_init = 1
+        self.step_size_min = 1e-5
         self.shrink_factor = 0.1
         self.decr_enough_threshold = 1e-5
         self.use_boundary = False

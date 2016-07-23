@@ -1,8 +1,4 @@
 import time
-import itertools
-import numpy as np
-import scipy as sp
-from common import *
 from scipy.optimize import minimize
 from fitted_model import Fitted_Model
 
@@ -11,7 +7,7 @@ class Nelder_Mead_Algo:
         self.data = data
         self._create_problem_wrapper()
 
-    def run(self, initial_lambdas, num_iters=100):
+    def run(self, initial_lambdas, num_iters=10):
         start = time.time()
 
         res = minimize(self.get_validation_cost, initial_lambdas, method='nelder-mead', options={"maxiter":num_iters})
