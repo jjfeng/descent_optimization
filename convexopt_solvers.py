@@ -555,6 +555,8 @@ class SparseAdditiveModelProblemWrapperSimple:
             self.diff_matrices.append(D)
 
         self.train_indices = train_indices
+
+        self.lambdas = [Parameter(sign="positive"), Parameter(sign="positive")]
         self.thetas = Variable(self.num_samples, self.num_features)
         objective = 0.5 * sum_squares(self.y - sum_entries(self.thetas[self.train_indices,:], axis=1))
         objective += sum([self.lambdas[0] * pnorm(self.thetas[:,i], 2) for i in range(self.num_features)])
@@ -573,7 +575,7 @@ class SparseAdditiveModelProblemWrapperSimple:
         self.problem.solve(solver=SCS, verbose=VERBOSE, warm_start=warm_start)
 
         print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
-        return thetas.value
+        return self.thetas.value
 
 class SparseAdditiveModelProblemWrapper:
     def __init__(self, X, train_indices, y, tiny_e=0):
@@ -594,6 +596,7 @@ class SparseAdditiveModelProblemWrapper:
         self.lambdas = [Parameter(sign="positive")]
         for i in range(self.num_features):
             self.lambdas.append(Parameter(sign="positive"))
+        print "self.lambdas", len(self.lambdas)
 
         self.thetas = Variable(self.num_samples, self.num_features)
         objective = 0.5 * sum_squares(self.y - sum_entries(self.thetas[self.train_indices,:], axis=1))
@@ -609,8 +612,7 @@ class SparseAdditiveModelProblemWrapper:
     # We need it in order to have an accurate gradient for validation loss wrt lambdas
     # as dimension of the solution vector increases, the number of iterations of SCS is necessary!
     def solve(self, lambdas, high_accur=True, warm_start=True):
-        print "lambdas", lambdas
-        for i,l in enumerate(lambdas):
+        for i in range(lambdas.size):
             self.lambdas[i].value = lambdas[i]
 
         if high_accur:
@@ -621,7 +623,29 @@ class SparseAdditiveModelProblemWrapper:
             max_iters = SCS_MAX_ITERS * 2
 
         # ECOS is not providing good enough precision for some reason
-        print "do SCS"
+        if high_accur:
+            eps = SCS_HIGH_ACC_EPS * 1e-6
+            max_iters = SCS_MAX_ITERS * self.num_features
+        else:
+            eps = SCS_EPS
+            max_iters = SCS_MAX_ITERS * 2
+
+        # Don't use ECOS/ECOS_BB - for some reason, it's not finding good minimizers of the fcn. Even though the gradient of the training loss
+        # does reach zero, it doesn't match the calculated gradient for some reason. My guess is that ECOS is getting stuck somewhere.
+        # Ignoring that, it seems to just change on reg parameter and ignore the other ones.
+        #### HUHHHH NOW ITS WORKING?! WTF.
+
+        # Using indirect does not work - bad derivatives! Not normalizing is also better - bigger changes.
+        # try:
+        #     print "do ECOS"
+        #     self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL, max_iters=800)
+        # except SolverError:
+        #     self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
+        #
+        # if self.problem.status == OPTIMAL_INACCURATE:
+        #     print "do SCS"
+        #     self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
+
         self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
 
         print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value

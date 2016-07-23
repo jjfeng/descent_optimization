@@ -5,7 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sparse_add_models_hillclimb import Sparse_Add_Model_Hillclimb
-# from sparse_add_models_neldermead import Sparse_Add_Model_NM
+from sparse_add_models_neldermead import Sparse_Add_Model_Nelder_Mead
+from sparse_add_models_grid_search import Sparse_Add_Model_Grid_Search
 from data_generator import DataGenerator
 from method_results import MethodResults
 from method_results import MethodResult
@@ -13,6 +14,7 @@ from method_results import MethodResult
 from common import *
 
 np.random.seed(1)
+NUM_RUNS = 1
 
 def identity_fcn(x):
     return x.reshape(x.size, 1)
@@ -34,12 +36,14 @@ def const_zero(x):
 
 
 def main(argv):
-    num_funcs = 3
-    num_zero_funcs = 2
-    train_size = 5 #0
-    validate_size = 5 #0
-    test_size = 0
+    num_funcs = 5
+    num_zero_funcs = 5
+    train_size = 100
+    validate_size = 50
+    test_size = 50
     snr = 2
+    gs_lambdas1 = [0.1, 1]
+    gs_lambdas2 = [1]
 
     np.random.seed(10)
 
@@ -63,19 +67,46 @@ def main(argv):
             snr = float(snr)
 
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
+    assert(num_funcs <= len(SMOOTH_FCNS))
     smooth_fcn_list = SMOOTH_FCNS[:num_funcs] + [const_zero] * num_zero_funcs
-
     data_gen = DataGenerator(train_size, validate_size, test_size, feat_range=[0,1], snr=snr)
-    observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
 
     hc_results = MethodResults("Hillclimb")
+    nm_results = MethodResults("NelderMead")
+    gs_results = MethodResults("Gridsearch")
+    for i in range(NUM_RUNS):
+        observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
 
-    hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-    initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
-    hc_algo.run(initial_lambdas, debug=True)
+        initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
 
-    print "===========RUN ============"
-    hc_results.print_results()
+        # nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
+        # nm_algo.run(initial_lambdas[:2])
+        # nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
+
+        gs_algo = Sparse_Add_Model_Grid_Search(observed_data)
+        gs_algo.run(gs_lambdas1, gs_lambdas2)
+        gs_results.append(create_method_result(observed_data, gs_algo.fmodel))
+
+        hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
+        hc_algo.run(initial_lambdas, debug=False) #True)
+        hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
+
+        print "===========RUN ============"
+        hc_results.print_results()
+        nm_results.print_results()
+
+def create_method_result(data, algo):
+    test_err = testerror_sparse_add_smooth(
+        data.y_test,
+        data.test_idx,
+        algo.current_model_params
+    )
+    print "validation cost", algo.current_cost, "test_err", test_err
+    return MethodResult(
+        test_err=test_err,
+        validation_err=algo.current_cost,
+        runtime=algo.runtime
+    )
 
 if __name__ == "__main__":
     main(sys.argv[1:])

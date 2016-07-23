@@ -141,8 +141,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         u_matrices = np.hstack(u_matrices)
         uu = u_matrices.T * self.train_I.T * self.train_I * u_matrices
         tiny_e_matrix = self.problem_wrapper.tiny_e * np.eye(uu.shape[0])
-        print "zero uu???", self._zero_theta_indices(uu + lambda0 * b_diag + tiny_e_matrix)
-        # zeroed_hessian = self._zero_theta_indices(uu + lambda0 * b_diag + tiny_e_matrix)
+        # print "zeroed hessian?", self._zero_theta_indices(uu + lambda0 * b_diag + tiny_e_matrix)
         hessian = uu + lambda0 * b_diag + tiny_e_matrix
         dbeta_dlambda, res, rank, _ = np.linalg.lstsq(hessian, -1 * rhs_matrix)
         assert(uu.shape[0] == rank)  # Asserting for fun here. We have to make sure our Hessian is invertible. At least for now.
@@ -157,12 +156,12 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
             print "===========CHECK I= %d ===============" % i
             reg1 = [r for r in self.fmodel.current_lambdas]
             reg1[i] += epsilon
-            thetas1 = self.problem_wrapper.solve(reg1)
+            thetas1 = self.problem_wrapper.solve(np.array(reg1))
             error1 = self.get_validate_cost(thetas1)
 
             reg2 = [r for r in self.fmodel.current_lambdas]
             reg2[i] -= epsilon
-            thetas2 = self.problem_wrapper.solve(reg2)
+            thetas2 = self.problem_wrapper.solve(np.array(reg2))
             error2 = self.get_validate_cost(thetas2)
             i_deriv = (error1 - error2)/(epsilon * 2)
             print "numerical sum_dthetas_dlambda", np.sum((thetas1 - thetas2)/(epsilon * 2), axis=1)

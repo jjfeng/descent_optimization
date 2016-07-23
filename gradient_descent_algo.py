@@ -1,4 +1,5 @@
 import sys
+import time
 import scipy as sp
 from fitted_model import Fitted_Model
 import numpy as np
@@ -17,13 +18,15 @@ class Gradient_Descent_Algo:
         self._create_lambda_configs()
 
     def run(self, initial_lambdas, debug=True):
+        start_time = time.time()
         model_params = self.problem_wrapper.solve(initial_lambdas)
 
         # Check that no model params are None
         assert(not self._any_model_params_none(model_params))
 
         current_cost = self.get_validate_cost(model_params)
-        self.fmodel = Fitted_Model(initial_lambdas, model_params, current_cost)
+        self.fmodel = Fitted_Model(initial_lambdas.size)
+        self.fmodel.update(initial_lambdas, model_params, current_cost)
         print "self.fmodel.current_cost", self.fmodel.current_cost
 
         step_size = self.step_size_init
@@ -31,11 +34,7 @@ class Gradient_Descent_Algo:
             lambda_derivatives = self._get_lambda_derivatives()
 
             if debug:
-                numerical_deriv = self._double_check_derivative(lambda_derivatives)
-                # lambda_derivatives = numerical_deriv
-                # print "numerical", numerical_deriv
-                # print lambda_derivatives
-                # 1/0
+                self._double_check_derivative(lambda_derivatives)
 
             potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
                 step_size,
@@ -69,6 +68,9 @@ class Gradient_Descent_Algo:
                 print self.method_label, "STEP SIZE TOO SMALL", step_size
                 break
             sys.stdout.flush()
+
+        runtime = time.time() - start_time
+        self.fmodel.set_runtime(runtime)
         print "TOTAL ITERS", i
         print self.fmodel.cost_history
 
