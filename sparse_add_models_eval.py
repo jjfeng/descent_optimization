@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sparse_add_models_hillclimb import Sparse_Add_Model_Hillclimb
+# from sparse_add_models_neldermead import Sparse_Add_Model_NM
 from data_generator import DataGenerator
 from method_results import MethodResults
 from method_results import MethodResult
@@ -35,8 +36,8 @@ def const_zero(x):
 def main(argv):
     num_funcs = 3
     num_zero_funcs = 2
-    train_size = 50
-    validate_size = 50
+    train_size = 5 #0
+    validate_size = 5 #0
     test_size = 0
     snr = 2
 
@@ -71,7 +72,7 @@ def main(argv):
 
     hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
     initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
-    hc_algo.run(initial_lambdas, debug=False) #True)
+    hc_algo.run(initial_lambdas, debug=True)
 
     print "===========RUN ============"
     hc_results.print_results()
