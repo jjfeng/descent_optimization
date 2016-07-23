@@ -33,14 +33,14 @@ def const_zero(x):
 
 
 def main(argv):
-    num_funcs = 1
-    num_zero_funcs = 0
-    train_size = 5
-    validate_size = 5
+    num_funcs = 3
+    num_zero_funcs = 2
+    train_size = 50
+    validate_size = 50
     test_size = 0
-    snr = 5
+    snr = 2
 
-    np.random.seed(50)
+    np.random.seed(10)
 
     try:
         opts, args = getopt.getopt(argv,"f:z:a:b:c:s:")
@@ -71,7 +71,7 @@ def main(argv):
 
     hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
     initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
-    hc_algo.run(initial_lambdas, debug=True)
+    hc_algo.run(initial_lambdas, debug=False) #True)
 
     print "===========RUN ============"
     hc_results.print_results()

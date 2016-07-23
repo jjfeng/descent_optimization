@@ -32,7 +32,7 @@ class Gradient_Descent_Algo:
 
             if debug:
                 numerical_deriv = self._double_check_derivative(lambda_derivatives)
-                lambda_derivatives = numerical_deriv
+                # lambda_derivatives = numerical_deriv
                 # print "numerical", numerical_deriv
                 # print lambda_derivatives
                 # 1/0
@@ -58,7 +58,8 @@ class Gradient_Descent_Algo:
                 self.fmodel.update(potential_lambdas, potential_model_params, potential_cost)
 
                 print self.method_label, "iter:", i, "step_size", step_size
-                print self.fmodel
+                print "current model", self.fmodel
+                print "cost_history", self.fmodel.cost_history
 
                 if self.fmodel.get_cost_diff() < self.decr_enough_threshold:
                     print "decrease amount too small", self.fmodel.get_cost_diff()
@@ -82,7 +83,7 @@ class Gradient_Descent_Algo:
             potential_model_params = None
 
         if self._any_model_params_none(potential_model_params):
-            potential_cost = MAX_COST
+            potential_cost = self.MAX_COST
         else:
             potential_cost = self.get_validate_cost(potential_model_params)
         return potential_lambdas, potential_model_params, potential_cost
@@ -103,4 +104,7 @@ class Gradient_Descent_Algo:
 
     @staticmethod
     def _any_model_params_none(model_params):
-        not any([m is None for m in model_params])
+        if model_params is None:
+            return True
+        else:
+            return any([m is None for m in model_params])

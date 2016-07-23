@@ -566,11 +566,11 @@ class SparseAdditiveModelProblemWrapper:
             D = sp.sparse.coo_matrix(self.diff_matrices[i])
             D_sparse = cvxopt.spmatrix(D.data, D.row.tolist(), D.col.tolist())
             objective += lambdas[i + 1] * pnorm(D_sparse * thetas[:,i], 1)
-        # objective += 0.5 * self.tiny_e/(self.num_features * self.num_samples) * sum_squares(thetas)
+        objective += 0.5 * self.tiny_e * sum_squares(thetas)
         self.problem = Problem(Minimize(objective))
         if high_accur:
-            eps = SCS_HIGH_ACC_EPS
-            max_iters = SCS_MAX_ITERS * 5
+            eps = SCS_HIGH_ACC_EPS * 1e-6
+            max_iters = SCS_MAX_ITERS * 10
         else:
             eps = SCS_EPS
             max_iters = SCS_MAX_ITERS * 2
@@ -581,14 +581,18 @@ class SparseAdditiveModelProblemWrapper:
         #### HUHHHH NOW ITS WORKING?! WTF.
 
         # Using indirect does not work - bad derivatives! Not normalizing is also better - bigger changes.
-        try:
-            self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL)
-        except SolverError:
-            print "switching to SCS!"
-            self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
+        # try:
+        #     self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL)
+        # except SolverError:
+        #     print "switching to SCS!"
+        #     self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
+
+        # if self.problem.status == OPTIMAL_INACCURATE:
+        # print "switching to SCS! optimal inaccurate! previous value:", self.problem.value
+        print "do SCS"
+        self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
 
         print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
-        self.lambdas = lambdas
         self.thetas = thetas.value
         return thetas.value
 
@@ -597,7 +601,7 @@ class SparseAdditiveModelProblemWrapper:
 
 def _make_discrete_diff_matrix_ord2(x_features):
     num_samples = len(x_features)
-    d1_matrix = np.zeros((num_samples, num_samples))
+    d1_matrix = np.matrix(np.zeros((num_samples, num_samples)))
     # 1st, figure out ordering of samples for the feature
     sample_ordering = np.argsort(x_features)
     ordered_x = x_features[sample_ordering]
