@@ -553,9 +553,6 @@ class SparseAdditiveModelProblemWrapper:
             self.diff_matrices.append(D)
 
         self.train_indices = train_indices
-        self.train_identifier = np.matrix(np.zeros((len(train_indices), num_samples)))
-        self.num_train = len(train_indices)
-        self.train_identifier[np.arange(self.num_train), train_indices] = 1
 
     # @param high_accur: for gradient descent on the validation errors, getting the optimal solution is super important.
     # We need it in order to have an accurate gradient for validation loss wrt lambdas
@@ -573,7 +570,7 @@ class SparseAdditiveModelProblemWrapper:
         self.problem = Problem(Minimize(objective))
         if high_accur:
             eps = SCS_HIGH_ACC_EPS
-            max_iters = SCS_MAX_ITERS * 4 * self.num_features # 5 * num_features
+            max_iters = SCS_MAX_ITERS * 5
         else:
             eps = SCS_EPS
             max_iters = SCS_MAX_ITERS * 2

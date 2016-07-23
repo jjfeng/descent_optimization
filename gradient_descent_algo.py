@@ -31,7 +31,11 @@ class Gradient_Descent_Algo:
             lambda_derivatives = self._get_lambda_derivatives()
 
             if debug:
-                self._double_check_derivative(lambda_derivatives)
+                numerical_deriv = self._double_check_derivative(lambda_derivatives)
+                lambda_derivatives = numerical_deriv
+                # print "numerical", numerical_deriv
+                # print lambda_derivatives
+                # 1/0
 
             potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
                 step_size,
@@ -64,6 +68,8 @@ class Gradient_Descent_Algo:
                 print self.method_label, "STEP SIZE TOO SMALL", step_size
                 break
             sys.stdout.flush()
+        print "TOTAL ITERS", i
+        print self.fmodel.cost_history
 
     def _run_potential_lambdas(self, step_size, lambda_derivatives):
         potential_lambdas = self._get_updated_lambdas(
