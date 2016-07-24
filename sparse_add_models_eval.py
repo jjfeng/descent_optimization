@@ -46,8 +46,9 @@ def main(argv):
     gs_lambdas1 = [0.125, 0.25, 0.5, 1, 2]
     gs_lambdas2 = gs_lambdas1
     spearmint_numruns = 15
-
-    np.random.seed(10)
+    seed = 10
+    
+    np.random.seed(seed)
 
     try:
         opts, args = getopt.getopt(argv,"f:z:a:b:c:s:")
@@ -67,6 +68,12 @@ def main(argv):
             test_size = int(arg)
         elif opt == "-s":
             snr = float(snr)
+
+    print "num_funcs", num_funcs
+    print "num_zero_funcs", num_zero_funcs
+    print "t/v/t size", train_size, validate_size, test_size
+    print "snr", snr
+    print "seed", seed
 
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
     assert(num_funcs <= len(SMOOTH_FCNS))
@@ -94,9 +101,9 @@ def main(argv):
         hc_algo.run(initial_lambdas, debug=False)
         hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
 
-        sp_algo = Sparse_Add_Model_Spearmint(observed_data)
-        sp_algo.run(spearmint_numruns)
-        sp_results.append(create_method_result(observed_data, sp_algo.fmodel))
+        # sp_algo = Sparse_Add_Model_Spearmint(observed_data)
+        # sp_algo.run(spearmint_numruns)
+        # sp_results.append(create_method_result(observed_data, sp_algo.fmodel))
 
         print "===========RUN ============"
         hc_results.print_results()
