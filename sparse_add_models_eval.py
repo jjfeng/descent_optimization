@@ -73,6 +73,7 @@ def main(argv):
     print "t/v/t size", train_size, validate_size, test_size
     print "snr", snr
     print "seed", seed
+    sys.stdout.flush()
 
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
     assert(num_funcs <= len(SMOOTH_FCNS))
@@ -91,14 +92,17 @@ def main(argv):
         nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
         nm_algo.run(initial_lambdas[:2])
         nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
+        sys.stdout.flush()
 
         gs_algo = Sparse_Add_Model_Grid_Search(observed_data)
         gs_algo.run(gs_lambdas1, gs_lambdas2)
         gs_results.append(create_method_result(observed_data, gs_algo.fmodel))
+        sys.stdout.flush()
 
         hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
         hc_algo.run(initial_lambdas, debug=False)
         hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
+        sys.stdout.flush()
 
         # sp_algo = Sparse_Add_Model_Spearmint(observed_data)
         # sp_algo.run(spearmint_numruns)
