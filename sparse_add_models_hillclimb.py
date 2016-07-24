@@ -89,6 +89,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         sum_dtheta_dlambda = self._get_sum_dtheta_dlambda(beta_u_forms, nonzero_thetas_idx)
         fitted_y_validate = np.sum(self.fmodel.current_model_params[self.data.validate_idx, :], axis=1)
         dloss_dlambda = -1 * sum_dtheta_dlambda[self.data.validate_idx, :].T * (self.data.y_validate - fitted_y_validate)
+        print "dloss dlambda", dloss_dlambda
         return dloss_dlambda.A1 # flatten the matrix
 
     def _get_sum_dtheta_dlambda(self, beta_u_forms, nonzero_thetas_idx):

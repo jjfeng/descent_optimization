@@ -71,8 +71,8 @@ class Gradient_Descent_Algo:
 
         runtime = time.time() - start_time
         self.fmodel.set_runtime(runtime)
-        print "TOTAL ITERS", i
-        print self.fmodel.cost_history
+        print "TOTAL ITERS %d, runtime %s" % (i, runtime)
+        print "entire cost history", self.fmodel.cost_history
 
     def _run_potential_lambdas(self, step_size, lambda_derivatives):
         potential_lambdas = self._get_updated_lambdas(
