@@ -621,7 +621,7 @@ class SparseAdditiveModelProblemWrapper:
             max_iters = SCS_MAX_ITERS * 3 * self.num_features
         else:
             eps = SCS_EPS
-            max_iters = SCS_MAX_ITERS * 2
+            max_iters = SCS_MAX_ITERS
 
         # Don't use ECOS/ECOS_BB - for some reason, it's not finding good minimizers of the fcn. Even though the gradient of the training loss
         self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
