@@ -2,7 +2,6 @@ import getopt
 import time
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 
 from sparse_add_models_hillclimb import Sparse_Add_Model_Hillclimb
 from sparse_add_models_neldermead import Sparse_Add_Model_Nelder_Mead
@@ -47,7 +46,7 @@ def main(argv):
     gs_lambdas2 = gs_lambdas1
     spearmint_numruns = 15
     seed = 10
-    
+
     np.random.seed(seed)
 
     try:
@@ -110,6 +109,7 @@ def main(argv):
         nm_results.print_results()
         gs_results.print_results()
         sp_results.print_results()
+        sys.stdout.flush()
 
 def create_method_result(data, algo):
     test_err = testerror_sparse_add_smooth(
