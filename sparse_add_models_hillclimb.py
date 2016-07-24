@@ -32,8 +32,9 @@ class BetaForm:
         self.u = null_matrix
 
         # Check that we reformulated theta but it is still very close to the original theta
-        assert(res.size == 0 or res < self.eps)
-        assert(np.linalg.norm(self.u * self.beta - self.theta, ord=2) < self.eps)
+        # assert(res.size == 0 or res < self.eps)
+        if np.linalg.norm(self.u * self.beta - self.theta, ord=2) > self.eps:
+            print "Warning: Reformulation is off: diff %f" % np.linalg.norm(self.u * self.beta - self.theta, ord=2)
 
     def __str__(self):
         return "beta %s, theta %s" % (self.beta, self.theta)
@@ -143,7 +144,9 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         # print "zeroed hessian?", self._zero_theta_indices(uu + lambda0 * b_diag + tiny_e_matrix)
         hessian = uu + lambda0 * b_diag + tiny_e_matrix
         dbeta_dlambda, res, rank, _ = np.linalg.lstsq(hessian, -1 * rhs_matrix)
-        assert(uu.shape[0] == rank)  # Asserting for fun here. We have to make sure our Hessian is invertible. At least for now.
+        # assert(uu.shape[0] == rank)  # Asserting for fun here. We have to make sure our Hessian is invertible. At least for now.
+        if uu.shape[0] != rank:
+            print "Warning: not full rank: %d %d" % (uu.shape[0], rank)
         sum_dtheta_dlambda = u_matrices * dbeta_dlambda
         return sum_dtheta_dlambda
 
