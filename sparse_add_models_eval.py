@@ -100,7 +100,7 @@ def main(argv):
         # sys.stdout.flush()
         #
         hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-        hc_algo.run(initial_lambdas, debug=False)
+        hc_algo.run([initial_lambdas], debug=False)
         hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
         sys.stdout.flush()
 

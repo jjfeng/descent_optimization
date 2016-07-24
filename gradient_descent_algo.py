@@ -26,14 +26,16 @@ class Gradient_Descent_Algo:
                 print "%s: best start lambda %s" % (self.method_label, initial_lambdas)
 
         runtime = time.time() - start_time
-        print "%s: runtime" % (self.method_label, runtime)
+        print "%s: runtime %s" % (self.method_label, runtime)
         self.fmodel.set_runtime(runtime)
 
     def _run_lambdas(self, initial_lambdas, debug=True):
         print "%s: initial_lambdas %s" % (self.method_label, initial_lambdas)
         start_history_idx = len(self.fmodel.cost_history)
+        # warm up the problem
+        self.problem_wrapper.solve(initial_lambdas, quick_run=True)
+        # do a real run now
         model_params = self.problem_wrapper.solve(initial_lambdas)
-
         # Check that no model params are None
         assert(not self._any_model_params_none(model_params))
 
@@ -50,7 +52,8 @@ class Gradient_Descent_Algo:
 
             potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
                 step_size,
-                lambda_derivatives
+                lambda_derivatives,
+                quick_run=True
             )
 
             # TODO: Do backtracking
@@ -59,17 +62,22 @@ class Gradient_Descent_Algo:
                     step_size *= self.shrink_factor**3
                 else:
                     step_size *= self.shrink_factor
-                print "(shrinking) potential_lambdas %s, step_size, %f" % (potential_lambdas, step_size)
-
                 potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
                     step_size,
-                    lambda_derivatives
+                    lambda_derivatives,
+                    quick_run=True
                 )
+                print "(shrinking) potential_lambdas %s, cost %f, step, %f" % (potential_lambdas, potential_cost, step_size)
 
             if self.fmodel.current_cost < potential_cost:
                 print "COST IS INCREASING!", potential_cost
                 break
             else:
+                potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
+                    step_size,
+                    lambda_derivatives,
+                    quick_run=False
+                )
                 self.fmodel.update(potential_lambdas, potential_model_params, potential_cost)
 
                 print self.method_label, "iter:", i, "step_size", step_size
@@ -95,13 +103,13 @@ class Gradient_Descent_Algo:
         backtrack_thres = self.fmodel.current_cost if backtrack_thres_raw < 0 else backtrack_thres_raw
         return potential_cost > backtrack_thres
 
-    def _run_potential_lambdas(self, step_size, lambda_derivatives):
+    def _run_potential_lambdas(self, step_size, lambda_derivatives, quick_run=False):
         potential_lambdas = self._get_updated_lambdas(
             step_size,
             lambda_derivatives
         )
         try:
-            potential_model_params = self.problem_wrapper.solve(potential_lambdas)
+            potential_model_params = self.problem_wrapper.solve(potential_lambdas, quick_run=quick_run)
         except cvxpy.error.SolverError:
             potential_model_params = None
 
