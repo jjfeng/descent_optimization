@@ -77,7 +77,7 @@ def main(argv):
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
     assert(num_funcs <= len(SMOOTH_FCNS))
     smooth_fcn_list = SMOOTH_FCNS[:num_funcs] + [const_zero] * num_zero_funcs
-    data_gen = DataGenerator(train_size, validate_size, test_size, feat_range=[0,1], snr=snr)
+    data_gen = DataGenerator(train_size, validate_size, test_size, feat_range=[-5,5], snr=snr)
 
     hc_results = MethodResults("Hillclimb")
     nm_results = MethodResults("NelderMead")
@@ -104,7 +104,7 @@ def main(argv):
         # sp_algo.run(spearmint_numruns)
         # sp_results.append(create_method_result(observed_data, sp_algo.fmodel))
 
-        print "===========RUN ============"
+        print "===========RUN %d ============" % i
         hc_results.print_results()
         nm_results.print_results()
         gs_results.print_results()
