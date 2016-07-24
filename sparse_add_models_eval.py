@@ -14,7 +14,7 @@ from method_results import MethodResult
 from common import *
 
 np.random.seed(1)
-NUM_RUNS = 1
+NUM_RUNS = 30
 
 def identity_fcn(x):
     return x.reshape(x.size, 1)
