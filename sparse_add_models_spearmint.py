@@ -1,4 +1,6 @@
+import os
 from spearmint import Spearmint_Algo
+from common import testerror_sparse_add_smooth
 from convexopt_solvers import SparseAdditiveModelProblemWrapper
 
 class Sparse_Add_Model_Spearmint(Spearmint_Algo):
@@ -12,8 +14,17 @@ class Sparse_Add_Model_Spearmint(Spearmint_Algo):
         )
         self.num_lambdas = self.data.X_full.shape[1] + 1
 
-    def get_validation_cost(self, lambdas):
-        thetas = self.problem_wrapper.solve(lambdas, high_accur=False)
+    def _check_make_configs(self, folder_suffix):
+        self.result_folder = "spearmint_descent/sparse_add_model%s" % folder_suffix
+        if not os.path.exists(self.result_folder):
+            os.makedirs(self.result_folder)
+        config_file_name = "%s/config.json" % self.result_folder
+        if not os.path.exists(config_file_name):
+            with open(config_file_name, 'w') as config_file:
+                print "_create_config_string", self._create_config_string(self.num_lambdas)
+                config_file.write(self._create_config_string(self.num_lambdas))
+
+    def get_validation_cost(self, thetas):
         validation_cost = testerror_sparse_add_smooth(
             self.data.y_validate,
             self.data.validate_idx,
