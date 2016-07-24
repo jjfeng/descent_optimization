@@ -20,7 +20,7 @@ def identity_fcn(x):
     return x.reshape(x.size, 1)
 
 def big_sin(x):
-    return identity_fcn(9 * np.sin(x*2))
+    return identity_fcn(9 * np.sin(x*3)) # 2
 
 def big_cos_sin(x):
     return identity_fcn(6 * (np.cos(x * 1.25) + np.sin(x/2 + 0.5)))
@@ -100,7 +100,7 @@ def main(argv):
         # sys.stdout.flush()
         #
         hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-        hc_algo.run([initial_lambdas], debug=False)
+        hc_algo.run([initial_lambdas, initial_lambdas * 0.1], debug=False)
         hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
         sys.stdout.flush()
 
