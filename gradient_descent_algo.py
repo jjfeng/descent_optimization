@@ -67,7 +67,7 @@ class Gradient_Descent_Algo:
                     lambda_derivatives,
                     quick_run=True
                 )
-                if potential_lambdas is not None:
+                if potential_cost is not None:
                     print "(shrinking) potential_lambdas %s, cost %f, step, %f" % (potential_lambdas, potential_cost, step_size)
                 else:
                     print "(shrinking) potential_lambdas None!"
