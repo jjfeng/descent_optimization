@@ -6,7 +6,9 @@ class Fitted_Model:
         self.cost_history = []
 
         self.current_cost = None
+        self.best_cost = None
         self.current_lambdas = None
+        self.best_lambdas = None
 
     def update(self, new_lambdas, new_model_params, cost):
         self.lambda_history.append(new_lambdas)
@@ -16,6 +18,11 @@ class Fitted_Model:
         self.current_model_params = self.model_param_history[-1]
         self.current_cost = self.cost_history[-1]
         self.current_lambdas = self.lambda_history[-1]
+
+        if self.best_cost is None or cost < self.best_cost:
+            self.best_cost = cost
+            self.best_lambdas = new_lambdas
+            self.best_model_params = new_model_params
 
     def set_runtime(self, runtime):
         self.runtime = runtime

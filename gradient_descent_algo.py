@@ -8,8 +8,6 @@ import cvxpy
 from common import *
 
 class Gradient_Descent_Algo:
-    MAX_COST = 1e10
-
     def __init__(self, data):
         self.data = data
 
@@ -17,15 +15,28 @@ class Gradient_Descent_Algo:
         self._create_problem_wrapper()
         self._create_lambda_configs()
 
-    def run(self, initial_lambdas, debug=True):
+    def run(self, initial_lambda_set, debug=True):
         start_time = time.time()
+
+        self.fmodel = Fitted_Model(initial_lambda_set[0].size)
+        best_cost = None
+        for initial_lambdas in initial_lambda_set:
+            self._run_lambdas(initial_lambdas, debug=debug)
+            if best_cost != self.fmodel.best_cost:
+                print "best start lambda %s" % initial_lambdas
+
+        runtime = time.time() - start_time
+        self.fmodel.set_runtime(runtime)
+
+    def _run_lambdas(self, initial_lambdas, debug=True):
+        print "%s: initial_lambdas %s" % (self.method_label, initial_lambdas)
+        start_history_idx = len(self.fmodel.cost_history)
         model_params = self.problem_wrapper.solve(initial_lambdas)
 
         # Check that no model params are None
         assert(not self._any_model_params_none(model_params))
 
         current_cost = self.get_validate_cost(model_params)
-        self.fmodel = Fitted_Model(initial_lambdas.size)
         self.fmodel.update(initial_lambdas, model_params, current_cost)
         print "self.fmodel.current_cost", self.fmodel.current_cost
 
@@ -42,8 +53,12 @@ class Gradient_Descent_Algo:
             )
 
             # TODO: Do backtracking
-            while potential_cost >= self.fmodel.current_cost and step_size > self.step_size_min:
-                step_size *= self.shrink_factor
+            while self._check_should_backtrack(potential_cost, step_size, lambda_derivatives) and step_size > self.step_size_min:
+                if potential_cost is None: # Then cvxpy couldn't find a solution. Shrink faster
+                    step_size *= self.shrink_factor**3
+                else:
+                    step_size *= self.shrink_factor
+                print "(shrinking) potential_lambdas %s, step_size, %f" % (potential_lambdas, step_size)
 
                 potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
                     step_size,
@@ -58,7 +73,7 @@ class Gradient_Descent_Algo:
 
                 print self.method_label, "iter:", i, "step_size", step_size
                 print "current model", self.fmodel
-                print "cost_history", self.fmodel.cost_history
+                print "cost_history", self.fmodel.cost_history[start_history_idx:]
 
                 if self.fmodel.get_cost_diff() < self.decr_enough_threshold:
                     print "decrease amount too small", self.fmodel.get_cost_diff()
@@ -69,10 +84,15 @@ class Gradient_Descent_Algo:
                 break
             sys.stdout.flush()
 
-        runtime = time.time() - start_time
-        self.fmodel.set_runtime(runtime)
         print "TOTAL ITERS", i
-        print self.fmodel.cost_history
+        print self.fmodel.cost_history[start_history_idx:]
+
+    def _check_should_backtrack(self, potential_cost, step_size, lambda_derivatives):
+        if potential_cost is None:
+            return True
+        backtrack_thres_raw = self.fmodel.current_cost - self.backtrack_alpha * step_size * np.linalg.norm(lambda_derivatives)**2
+        backtrack_thres = self.fmodel.current_cost if backtrack_thres_raw < 0 else backtrack_thres_raw
+        return potential_cost > backtrack_thres
 
     def _run_potential_lambdas(self, step_size, lambda_derivatives):
         potential_lambdas = self._get_updated_lambdas(
@@ -85,7 +105,7 @@ class Gradient_Descent_Algo:
             potential_model_params = None
 
         if self._any_model_params_none(potential_model_params):
-            potential_cost = self.MAX_COST
+            potential_cost = None
         else:
             potential_cost = self.get_validate_cost(potential_model_params)
         return potential_lambdas, potential_model_params, potential_cost

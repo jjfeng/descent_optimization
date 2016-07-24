@@ -49,11 +49,12 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
     def _create_descent_settings(self):
         self.num_iters = 30
         self.step_size_init = 1
-        self.step_size_min = 1e-5
+        self.step_size_min = 1e-6
         self.shrink_factor = 0.1
-        self.decr_enough_threshold = 1e-5
-        self.use_boundary = False
-        self.boundary_factor = 0.999
+        self.decr_enough_threshold = 1e-4
+        self.use_boundary = True
+        self.boundary_factor = 0.999999
+        self.backtrack_alpha = 0.001
 
     def _create_lambda_configs(self):
         self.lambda_mins = [1e-6] * (self.data.num_features + 1)
@@ -89,6 +90,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         sum_dtheta_dlambda = self._get_sum_dtheta_dlambda(beta_u_forms, nonzero_thetas_idx)
         fitted_y_validate = np.sum(self.fmodel.current_model_params[self.data.validate_idx, :], axis=1)
         dloss_dlambda = -1 * sum_dtheta_dlambda[self.data.validate_idx, :].T * (self.data.y_validate - fitted_y_validate)
+        print "dloss_dlambda", dloss_dlambda
         return dloss_dlambda.A1 # flatten the matrix
 
     def _get_sum_dtheta_dlambda(self, beta_u_forms, nonzero_thetas_idx):
@@ -156,13 +158,14 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         num_lambdas = len(self.fmodel.current_lambdas)
         for i in range(num_lambdas):
             print "===========CHECK I= %d ===============" % i
+            eps = min(epsilon, self.fmodel.current_lambdas[i]/100)
             reg1 = [r for r in self.fmodel.current_lambdas]
-            reg1[i] += epsilon
+            reg1[i] += eps
             thetas1 = self.problem_wrapper.solve(np.array(reg1))
             error1 = self.get_validate_cost(thetas1)
 
             reg2 = [r for r in self.fmodel.current_lambdas]
-            reg2[i] -= epsilon
+            reg2[i] -= eps
             thetas2 = self.problem_wrapper.solve(np.array(reg2))
             error2 = self.get_validate_cost(thetas2)
             i_deriv = (error1 - error2)/(epsilon * 2)

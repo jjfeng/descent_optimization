@@ -89,18 +89,18 @@ def main(argv):
 
         initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
 
-        nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
-        nm_algo.run(initial_lambdas[:2])
-        nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
-        sys.stdout.flush()
-
+        # nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
+        # nm_algo.run(initial_lambdas[:2])
+        # nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
+        # sys.stdout.flush()
+        #
         gs_algo = Sparse_Add_Model_Grid_Search(observed_data)
         gs_algo.run(gs_lambdas1, gs_lambdas2)
         gs_results.append(create_method_result(observed_data, gs_algo.fmodel))
         sys.stdout.flush()
 
         hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-        hc_algo.run(initial_lambdas, debug=False)
+        hc_algo.run([initial_lambdas, initial_lambdas * 0.1], debug=False) #False)
         hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
         sys.stdout.flush()
 
@@ -119,12 +119,12 @@ def create_method_result(data, algo):
     test_err = testerror_sparse_add_smooth(
         data.y_test,
         data.test_idx,
-        algo.current_model_params
+        algo.best_model_params
     )
-    print "validation cost", algo.current_cost, "test_err", test_err
+    print "validation cost", algo.best_cost, "test_err", test_err
     return MethodResult(
         test_err=test_err,
-        validation_err=algo.current_cost,
+        validation_err=algo.best_cost,
         runtime=algo.runtime
     )
 
