@@ -615,13 +615,6 @@ class SparseAdditiveModelProblemWrapper:
         for i in range(lambdas.size):
             self.lambdas[i].value = lambdas[i]
 
-        if high_accur:
-            eps = SCS_HIGH_ACC_EPS * 1e-6
-            max_iters = SCS_MAX_ITERS * 10
-        else:
-            eps = SCS_EPS
-            max_iters = SCS_MAX_ITERS * 2
-
         # ECOS is not providing good enough precision for some reason
         if high_accur:
             eps = SCS_HIGH_ACC_EPS * 1e-6
