@@ -99,15 +99,15 @@ def main(argv):
         # gs_results.append(create_method_result(observed_data, gs_algo.fmodel))
         # sys.stdout.flush()
         #
-        # hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-        # hc_algo.run([initial_lambdas, initial_lambdas * 0.1], debug=False)
-        # hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
-        # sys.stdout.flush()
+        hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
+        hc_algo.run([initial_lambdas, initial_lambdas * 0.1], debug=False)
+        hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
+        sys.stdout.flush()
 
-        sp_identifer = "%d_%d_%d_%d_%d_%d" % (num_funcs, num_zero_funcs, train_size, validate_size, test_size, snr)
-        sp_algo = Sparse_Add_Model_Spearmint(observed_data, sp_identifer)
-        sp_algo.run(spearmint_numruns)
-        sp_results.append(create_method_result(observed_data, sp_algo.fmodel))
+        # sp_identifer = "%d_%d_%d_%d_%d_%d" % (num_funcs, num_zero_funcs, train_size, validate_size, test_size, snr)
+        # sp_algo = Sparse_Add_Model_Spearmint(observed_data, sp_identifer)
+        # sp_algo.run(spearmint_numruns)
+        # sp_results.append(create_method_result(observed_data, sp_algo.fmodel))
 
         print "===========RUN %d ============" % i
         hc_results.print_results()
