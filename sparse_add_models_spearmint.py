@@ -1,5 +1,5 @@
 import os
-from spearmint import Spearmint_Algo
+from spearmint_algo import Spearmint_Algo
 from common import testerror_sparse_add_smooth
 from convexopt_solvers import SparseAdditiveModelProblemWrapper
 
