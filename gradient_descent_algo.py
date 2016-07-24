@@ -23,9 +23,10 @@ class Gradient_Descent_Algo:
         for initial_lambdas in initial_lambda_set:
             self._run_lambdas(initial_lambdas, debug=debug)
             if best_cost != self.fmodel.best_cost:
-                print "best start lambda %s" % initial_lambdas
+                print "%s: best start lambda %s" % (self.method_label, initial_lambdas)
 
         runtime = time.time() - start_time
+        print "%s: runtime" % (self.method_label, runtime)
         self.fmodel.set_runtime(runtime)
 
     def _run_lambdas(self, initial_lambdas, debug=True):
