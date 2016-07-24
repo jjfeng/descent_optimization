@@ -67,7 +67,7 @@ class Spearmint_Algo:
 
     @staticmethod
     def run_spearmint_command(experiment_folder, gridsize=20000):
-        cmd = "python spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d --method-args=use_multiprocessing=0" % gridsize
+        cmd = "python2.7 spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d --method-args=use_multiprocessing=0" % gridsize
         os.system("%s %s" % (cmd, experiment_folder))
 
     @staticmethod
