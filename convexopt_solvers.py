@@ -1,3 +1,4 @@
+import time
 from cvxpy import *
 import cvxopt
 from common import *
@@ -611,6 +612,7 @@ class SparseAdditiveModelProblemWrapper:
     # We need it in order to have an accurate gradient for validation loss wrt lambdas
     # as dimension of the solution vector increases, the number of iterations of SCS is necessary!
     def solve(self, lambdas, high_accur=True, warm_start=True):
+        start_time = time.time()
         print "cvxpy solve"
         for i in range(lambdas.size):
             self.lambdas[i].value = lambdas[i]
@@ -618,15 +620,18 @@ class SparseAdditiveModelProblemWrapper:
         # ECOS is not providing good enough precision for some reason
         if high_accur:
             eps = SCS_HIGH_ACC_EPS * 1e-6
-            max_iters = SCS_MAX_ITERS * self.num_features
+            max_iters = int(SCS_MAX_ITERS * 2.5 * self.num_features)
         else:
             eps = SCS_EPS
             max_iters = SCS_MAX_ITERS
 
         # Don't use ECOS/ECOS_BB - for some reason, it's not finding good minimizers of the fcn. Even though the gradient of the training loss
+        # self.problem.solve(solver=ECOS, verbose=VERBOSE, abstol=ECOS_TOL, reltol=ECOS_TOL, max_iters=200)
         self.problem.solve(solver=SCS, verbose=VERBOSE, max_iters=max_iters, use_indirect=False, eps=eps, normalize=False, warm_start=warm_start)
 
         print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
+
+        print "cvxpy runtime", time.time() - start_time
 
         if self.problem.value > 0 and self.problem.status in [OPTIMAL,  OPTIMAL_INACCURATE]:
             return self.thetas.value
