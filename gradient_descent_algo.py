@@ -103,7 +103,7 @@ class Gradient_Descent_Algo:
         cost = self.get_validate_cost(model_params)
         # If the derivative has a really large norm, it is unlikely that the problem was
         # solved to a close enough accuracy
-        if np.linalg.norm(lambda_derivatives, ord=inf) > 2 * 1e4:
+        if np.linalg.norm(lambda_derivatives, ord=inf) > self.higher_accuracy_thres:
             higher_accur_model_params = self.problem_wrapper.solve(lambdas, quick_run=False)
             # For some reason, if the second time solving the problem fails
             if self._any_model_params_none(higher_accur_model_params):

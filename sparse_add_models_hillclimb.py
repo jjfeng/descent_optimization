@@ -55,6 +55,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         self.use_boundary = True
         self.boundary_factor = 0.999999
         self.backtrack_alpha = 0.001
+        self.higher_accuracy_thres = 2 * 1e4
 
     def _create_lambda_configs(self):
         self.lambda_mins = [1e-6] * (self.data.num_features + 1)
