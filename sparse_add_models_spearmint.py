@@ -14,6 +14,9 @@ class Sparse_Add_Model_Spearmint(Spearmint_Algo):
         )
         self.num_lambdas = self.data.X_full.shape[1] + 1
 
+    def _solve_problem(self, lambdas):
+        return self.problem_wrapper.solve(lambdas, high_accur=False, quick_run=True)
+
     def _check_make_configs(self, folder_suffix):
         self.result_folder = "spearmint_descent/sparse_add_model%s" % folder_suffix
         if not os.path.exists(self.result_folder):

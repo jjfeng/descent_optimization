@@ -42,7 +42,7 @@ class Spearmint_Algo:
                         # P means pending experiment to run
                         # Run experiment
                         print "lambdas", lambdas
-                        model_params = self.problem_wrapper.solve(lambdas)
+                        model_params = self._solve_problem(lambdas)
                         current_cost = self.get_validation_cost(model_params)
 
                         if best_cost is None or best_cost > current_cost:
