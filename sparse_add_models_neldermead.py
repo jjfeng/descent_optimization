@@ -16,7 +16,7 @@ class Sparse_Add_Model_Nelder_Mead(Nelder_Mead_Algo):
     def get_validation_cost(self, lambdas):
         # if any are not positive, then just return max value
         for l in lambdas:
-            if l8 <= 0:
+            if l <= 0:
                 return self.MAX_COST
 
         thetas = self.problem_wrapper.solve(lambdas)

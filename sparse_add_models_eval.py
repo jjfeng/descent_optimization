@@ -14,6 +14,7 @@ from method_results import MethodResult
 from common import *
 
 NUM_RUNS = 30
+METHODS = ["NM", "HC", "GS", "SP"]
 
 def identity_fcn(x):
     return x.reshape(x.size, 1)
@@ -33,7 +34,6 @@ def pwr_small(x):
 def const_zero(x):
     return np.zeros(x.shape)
 
-
 def main(argv):
     num_funcs = 2
     num_zero_funcs = 2
@@ -50,7 +50,7 @@ def main(argv):
     np.random.seed(seed)
 
     try:
-        opts, args = getopt.getopt(argv,"f:z:a:b:c:s:")
+        opts, args = getopt.getopt(argv,"f:z:a:b:c:s:m:")
     except getopt.GetoptError:
         sys.exit(2)
 
@@ -67,7 +67,11 @@ def main(argv):
             test_size = int(arg)
         elif opt == "-s":
             snr = float(arg)
+        elif opt == "-m":
+            assert(arg in METHODS)
+            method = arg
 
+    print "method", method
     print "num_funcs", num_funcs
     print "num_zero_funcs", num_zero_funcs
     print "t/v/t size", train_size, validate_size, test_size
@@ -91,26 +95,26 @@ def main(argv):
 
         initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
         initial_lambdas[0] = 10
-
-        nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
-        nm_algo.run(initial_lambdas, num_iters=nm_iters)
-        nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
-        sys.stdout.flush()
-        #
-        # gs_algo = Sparse_Add_Model_Grid_Search(observed_data)
-        # gs_algo.run(gs_lambdas1, gs_lambdas2)
-        # gs_results.append(create_method_result(observed_data, gs_algo.fmodel))
-        # sys.stdout.flush()
-        #
-        # hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-        # hc_algo.run([initial_lambdas], debug=False)
-        # hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
-        # sys.stdout.flush()
-
-        # sp_identifer = "%d_%d_%d_%d_%d_%d" % (num_funcs, num_zero_funcs, train_size, validate_size, test_size, snr)
-        # sp_algo = Sparse_Add_Model_Spearmint(observed_data, sp_identifer)
-        # sp_algo.run(spearmint_numruns)
-        # sp_results.append(create_method_result(observed_data, sp_algo.fmodel))
+        if method == "NM":
+            nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
+            nm_algo.run(initial_lambdas, num_iters=nm_iters)
+            nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
+            sys.stdout.flush()
+        elif method == "GS":
+            gs_algo = Sparse_Add_Model_Grid_Search(observed_data)
+            gs_algo.run(gs_lambdas1, gs_lambdas2)
+            gs_results.append(create_method_result(observed_data, gs_algo.fmodel))
+            sys.stdout.flush()
+        elif method == "HC":
+            hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
+            hc_algo.run([initial_lambdas], debug=False)
+            hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
+            sys.stdout.flush()
+        elif method == "SP":
+            sp_identifer = "%d_%d_%d_%d_%d_%d" % (num_funcs, num_zero_funcs, train_size, validate_size, test_size, snr)
+            sp_algo = Sparse_Add_Model_Spearmint(observed_data, sp_identifer)
+            sp_algo.run(spearmint_numruns)
+            sp_results.append(create_method_result(observed_data, sp_algo.fmodel))
 
         print "===========RUN %d ============" % i
         hc_results.print_results()
