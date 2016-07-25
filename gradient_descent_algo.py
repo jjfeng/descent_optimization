@@ -35,21 +35,25 @@ class Gradient_Descent_Algo:
         # warm up the problem
         self.problem_wrapper.solve(initial_lambdas, quick_run=True)
         # do a real run now
-        model_params, current_cost, lambda_derivatives = self._solve_to_high_accur(initial_lambdas)
+        model_params = self.problem_wrapper.solve(initial_lambdas)
         # Check that no model params are None
         assert(not self._any_model_params_none(model_params))
 
+        current_cost = self.get_validate_cost(model_params)
         self.fmodel.update(initial_lambdas, model_params, current_cost)
         print "self.fmodel.current_cost", self.fmodel.current_cost
 
         step_size = self.step_size_init
         for i in range(0, self.num_iters):
+            lambda_derivatives = self._get_lambda_derivatives()
+
             if debug:
                 self._double_check_derivative(lambda_derivatives)
 
             potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
                 step_size,
                 lambda_derivatives,
+                quick_run=True
             )
 
             # TODO: Do backtracking
@@ -61,6 +65,7 @@ class Gradient_Descent_Algo:
                 potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
                     step_size,
                     lambda_derivatives,
+                    quick_run=True
                 )
                 if potential_cost is not None:
                     print "(shrinking) potential_lambdas %s, cost %f, step, %f" % (potential_lambdas, potential_cost, step_size)
@@ -71,8 +76,12 @@ class Gradient_Descent_Algo:
                 print "COST IS INCREASING!", potential_cost
                 break
             else:
-                model_params, current_cost, lambda_derivatives = self._solve_to_high_accur(potential_lambdas)
-                self.fmodel.update(potential_lambdas, model_params, current_cost)
+                potential_lambdas, potential_model_params, potential_cost = self._run_potential_lambdas(
+                    step_size,
+                    lambda_derivatives,
+                    quick_run=False
+                )
+                self.fmodel.update(potential_lambdas, potential_model_params, potential_cost)
 
                 print self.method_label, "iter:", i, "step_size", step_size
                 print "current model", self.fmodel
@@ -90,30 +99,6 @@ class Gradient_Descent_Algo:
         print "TOTAL ITERS", i
         print self.fmodel.cost_history[start_history_idx:]
 
-    def _solve_to_high_accur(self, lambdas):
-        try:
-            model_params = self.problem_wrapper.solve(lambdas, quick_run=False)
-        except cvxpy.error.SolverError:
-            model_params = None
-
-        if self._any_model_params_none(model_params):
-            return None, None, None
-
-        lambda_derivatives = self._get_lambda_derivatives()
-        cost = self.get_validate_cost(model_params)
-        # If the derivative has a really large norm, it is unlikely that the problem was
-        # solved to a close enough accuracy
-        if np.linalg.norm(lambda_derivatives, ord=inf) > self.higher_accuracy_thres:
-            higher_accur_model_params = self.problem_wrapper.solve(lambdas, quick_run=False)
-            # For some reason, if the second time solving the problem fails
-            if self._any_model_params_none(higher_accur_model_params):
-                return model_params, cost, lambda_derivatives
-            model_params = higher_accur_model_params
-            lambda_derivatives = self._get_lambda_derivatives()
-            cost = self.get_validate_cost(model_params)
-
-        return model_params, cost, lambda_derivatives
-
     def _check_should_backtrack(self, potential_cost, step_size, lambda_derivatives):
         if potential_cost is None:
             return True
@@ -121,14 +106,13 @@ class Gradient_Descent_Algo:
         backtrack_thres = self.fmodel.current_cost if backtrack_thres_raw < 0 else backtrack_thres_raw
         return potential_cost > backtrack_thres
 
-    def _run_potential_lambdas(self, step_size, lambda_derivatives):
-        # Only does a quick run to see if this lambda has hope
+    def _run_potential_lambdas(self, step_size, lambda_derivatives, quick_run=False):
         potential_lambdas = self._get_updated_lambdas(
             step_size,
             lambda_derivatives
         )
         try:
-            potential_model_params = self.problem_wrapper.solve(potential_lambdas, quick_run=True)
+            potential_model_params = self.problem_wrapper.solve(potential_lambdas, quick_run=quick_run)
         except cvxpy.error.SolverError:
             potential_model_params = None
 

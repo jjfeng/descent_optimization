@@ -27,6 +27,7 @@ class Spearmint_Algo:
         # Find new experiment
         best_cost = None
         for i in range(num_runs):
+            print "%s: iter %d" % (self.method_label, i)
             self.run_spearmint_command(self.result_folder)
 
             with open(self.result_file,'r') as resfile:
@@ -67,6 +68,8 @@ class Spearmint_Algo:
             sys.stdout.flush()
 
         self.fmodel.set_runtime(runtime)
+        print "%s: runtime %s" % (self.method_label, runtime)
+        print self.fmodel
 
         # VERY IMPORTANT to clean spearmint results
         self.run_spearmint_clean(self.result_folder)

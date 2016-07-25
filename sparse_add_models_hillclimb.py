@@ -55,7 +55,6 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         self.use_boundary = True
         self.boundary_factor = 0.999999
         self.backtrack_alpha = 0.001
-        self.higher_accuracy_thres = 2 * 1e4
 
     def _create_lambda_configs(self):
         self.lambda_mins = [1e-6] * (self.data.num_features + 1)
@@ -162,12 +161,12 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
             eps = min(epsilon, self.fmodel.current_lambdas[i]/100)
             reg1 = [r for r in self.fmodel.current_lambdas]
             reg1[i] += eps
-            thetas1 = self.problem_wrapper.solve(np.array(reg1))
+            thetas1 = self.problem_wrapper.solve(np.array(reg1), quick_run=True)
             error1 = self.get_validate_cost(thetas1)
 
             reg2 = [r for r in self.fmodel.current_lambdas]
             reg2[i] -= eps
-            thetas2 = self.problem_wrapper.solve(np.array(reg2))
+            thetas2 = self.problem_wrapper.solve(np.array(reg2), quick_run=True)
             error2 = self.get_validate_cost(thetas2)
             i_deriv = (error1 - error2)/(epsilon * 2)
             print "numerical sum_dthetas_dlambda", np.sum((thetas1 - thetas2)/(epsilon * 2), axis=1)
