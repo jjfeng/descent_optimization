@@ -44,8 +44,8 @@ def main(argv):
     gs_lambdas1 = [0.125, 0.25, 0.5, 1, 2]
     gs_lambdas2 = gs_lambdas1
     spearmint_numruns = 100
+    nm_iters = 80
     seed = 10
-    print "sp runs", spearmint_numruns
 
     np.random.seed(seed)
 
@@ -72,6 +72,8 @@ def main(argv):
     print "num_zero_funcs", num_zero_funcs
     print "t/v/t size", train_size, validate_size, test_size
     print "snr", snr
+    print "sp runs", spearmint_numruns
+    print "nm_iters", nm_iters
     print "seed", seed
     sys.stdout.flush()
 
@@ -90,20 +92,20 @@ def main(argv):
         initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
         initial_lambdas[0] = 10
 
-        # nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
-        # nm_algo.run(initial_lambdas[:2])
-        # nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
-        # sys.stdout.flush()
+        nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
+        nm_algo.run(initial_lambdas, num_iters=nm_iters)
+        nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
+        sys.stdout.flush()
         #
         # gs_algo = Sparse_Add_Model_Grid_Search(observed_data)
         # gs_algo.run(gs_lambdas1, gs_lambdas2)
         # gs_results.append(create_method_result(observed_data, gs_algo.fmodel))
         # sys.stdout.flush()
         #
-        hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-        hc_algo.run([initial_lambdas], debug=False)
-        hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
-        sys.stdout.flush()
+        # hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
+        # hc_algo.run([initial_lambdas], debug=False)
+        # hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
+        # sys.stdout.flush()
 
         # sp_identifer = "%d_%d_%d_%d_%d_%d" % (num_funcs, num_zero_funcs, train_size, validate_size, test_size, snr)
         # sp_algo = Sparse_Add_Model_Spearmint(observed_data, sp_identifer)

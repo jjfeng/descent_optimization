@@ -15,7 +15,7 @@ class Nelder_Mead_Algo:
         runtime = time.time() - start
 
         print "%s: best cost %f, lambda %s, total calls %d" % (self.method_label, res.fun, res.x, res.nfev)
-        best_model_params = self.problem_wrapper.solve(res.x)
+        best_model_params = self.problem_wrapper.solve(res.x, quick_run=True)
 
         self.fmodel = Fitted_Model(initial_lambdas.size)
         self.fmodel.update(res.x, best_model_params, res.fun)
