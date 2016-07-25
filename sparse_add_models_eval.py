@@ -66,7 +66,7 @@ def main(argv):
         elif opt == '-c':
             test_size = int(arg)
         elif opt == "-s":
-            snr = float(snr)
+            snr = float(arg)
 
     print "num_funcs", num_funcs
     print "num_zero_funcs", num_zero_funcs
