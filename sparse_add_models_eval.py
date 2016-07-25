@@ -95,7 +95,7 @@ def main(argv):
         observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
 
         initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
-        initial_lambdas[0] = 10
+        initial_lambdas[0] = 50
         if method == "NM":
             nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
             nm_algo.run(initial_lambdas, num_iters=nm_iters)

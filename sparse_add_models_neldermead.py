@@ -25,4 +25,5 @@ class Sparse_Add_Model_Nelder_Mead(Nelder_Mead_Algo):
             self.data.validate_idx,
             thetas
         )
+        print "validation_cost", validation_cost
         return validation_cost
