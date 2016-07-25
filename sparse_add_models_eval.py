@@ -41,7 +41,7 @@ def main(argv):
     validate_size = 50
     test_size = 50
     snr = 2
-    gs_lambdas1 = [0.125, 0.25, 0.5, 1, 2]
+    gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/10))
     gs_lambdas2 = gs_lambdas1
     spearmint_numruns = 100
     nm_iters = 80

@@ -13,11 +13,11 @@ class Grid_Search:
     def run(self, lambdas1, lambdas2):
         start = time.time()
 
-        self.fmodel = Fitted_Model(num_lambdas=2)
         best_cost = self.MAX_COST
-
         # if only one lambda to tune
         if lambdas2 is None:
+            self.fmodel = Fitted_Model(num_lambdas=1)
+            print "%s lambda values: %s" % (self.method_label, lambdas1)
             for l1 in lambdas1:
                 curr_lambdas = np.array([l1])
                 model_params = self.problem_wrapper.solve(curr_lambdas)
@@ -28,6 +28,9 @@ class Grid_Search:
                     print "%s: best_validation_error %f" % (self.method_label, best_cost)
                     self.fmodel.update(curr_lambdas, model_params, cost)
         else:
+            self.fmodel = Fitted_Model(num_lambdas=2)
+            print "%s lambda1 values: %s" % (self.method_label, lambdas1)
+            print "%s lambda2 values: %s" % (self.method_label, lambdas2)
             # if two lambdas to tune
             for l1 in lambdas1:
                 for l2 in lambdas2:
