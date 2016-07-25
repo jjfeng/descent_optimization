@@ -9,22 +9,25 @@ class MethodResults:
         self.sensitivities = []
         self.validation_errs = []
         self.runtimes = []
+        self.lambda_sets = []
 
     def get_num_runs(self):
         return len(self.test_errs)
 
     def print_results(self):
-        print self.method_name, "Results: (mean, std dev)"
-        print "beta: %.4f, %.4f" % (np.average(self.beta_errs), np.var(self.beta_errs))
-        print "validation: %.4f, %.4f" % (np.average(self.validation_errs), np.var(self.validation_errs))
-        print "test: %.4f, %.4f" % (np.average(self.test_errs), np.var(self.test_errs))
+        if len(self.validation_errs) > 0:
+            print self.method_name, "Results: (mean, std dev)"
+            print "beta: %.4f, %.4f" % (np.average(self.beta_errs), np.var(self.beta_errs))
+            print "validation: %.4f, %.4f" % (np.average(self.validation_errs), np.var(self.validation_errs))
+            print "test: %.4f, %.4f" % (np.average(self.test_errs), np.var(self.test_errs))
 
-        if len(self.theta_errs):
-            print "theta: %.4f, %.4f" % (np.average(self.theta_errs), np.var(self.theta_errs))
-        if len(self.sensitivities):
-            print "sensitivity: %.4f, %.4f" % (np.average(self.sensitivities), np.var(self.sensitivities))
+            if len(self.theta_errs):
+                print "theta: %.4f, %.4f" % (np.average(self.theta_errs), np.var(self.theta_errs))
+            if len(self.sensitivities):
+                print "sensitivity: %.4f, %.4f" % (np.average(self.sensitivities), np.var(self.sensitivities))
 
-        print "runtimes: %.4f, %.4f" % (np.average(self.runtimes), np.var(self.runtimes))
+            print "runtimes: %.4f, %.4f" % (np.average(self.runtimes), np.var(self.runtimes))
+            print "average lambdas: %s" % np.mean(np.vstack(self.lambda_sets), axis=0)
 
     def append(self, result):
         if result.test_err is not None:
@@ -51,6 +54,8 @@ class MethodResults:
         if result.sensitivity is not None:
             self.sensitivities.append(result.sensitivity)
 
+        if result.lambdas is not None:
+            self.lambda_sets.append(result.lambdas)
 
     def append_test_beta_err(self, beta_test_errs):
         self.test_errs.append(beta_test_errs[0])
@@ -68,10 +73,11 @@ class MethodResults:
         self.validation_errs.append(validation_err)
 
 class MethodResult:
-    def __init__(self, test_err=None, beta_err=None, validation_err=None, theta_err=None, sensitivity=None, runtime=None):
+    def __init__(self, test_err=None, beta_err=None, validation_err=None, theta_err=None, sensitivity=None, runtime=None, lambdas=None):
         self.test_err = test_err
         self.beta_err = beta_err
         self.validation_err = validation_err
         self.theta_err = theta_err
         self.runtime = runtime
         self.sensitivity = sensitivity
+        self.lambdas = lambdas

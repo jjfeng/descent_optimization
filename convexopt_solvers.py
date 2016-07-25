@@ -620,8 +620,8 @@ class SparseAdditiveModelProblemWrapper:
 
         # ECOS is not providing good enough precision for some reason
         if high_accur and not quick_run:
-            eps = SCS_HIGH_ACC_EPS * 1e-2
-            max_iters = int(SCS_MAX_ITERS * 3 * self.num_features)
+            eps = SCS_HIGH_ACC_EPS * 1e-3
+            max_iters = SCS_MAX_ITERS * 10
         else:
             eps = SCS_EPS
             max_iters = SCS_MAX_ITERS

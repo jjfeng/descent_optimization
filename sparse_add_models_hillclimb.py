@@ -47,11 +47,11 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
     method_label = "Sparse_Add_Model_Hillclimb"
 
     def _create_descent_settings(self):
-        self.num_iters = 25
+        self.num_iters = 15
         self.step_size_init = 1
         self.step_size_min = 1e-6
         self.shrink_factor = 0.1
-        self.decr_enough_threshold = 0.0001
+        self.decr_enough_threshold = 0.01
         self.use_boundary = True
         self.boundary_factor = 0.999999
         self.backtrack_alpha = 0.001
@@ -183,6 +183,8 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
 
     @staticmethod
     def _get_nonzero_theta_vectors(thetas, threshold=1e-8):
+        print "_get_nonzero_theta_vectors???"
+        print map(lambda i: np.linalg.norm(thetas[:,i], ord=2), range(thetas.shape[1]))
         nonzero_thetas_idx = map(lambda i: np.linalg.norm(thetas[:,i], ord=2) > threshold, range(thetas.shape[1]))
         return np.array(nonzero_thetas_idx)
 

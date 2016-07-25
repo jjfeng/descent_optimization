@@ -13,7 +13,6 @@ from method_results import MethodResult
 
 from common import *
 
-np.random.seed(1)
 NUM_RUNS = 30
 
 def identity_fcn(x):
@@ -89,6 +88,7 @@ def main(argv):
         observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
 
         initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
+        initial_lambdas[0] = 10
 
         # nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
         # nm_algo.run(initial_lambdas[:2])
@@ -127,7 +127,8 @@ def create_method_result(data, algo):
     return MethodResult(
         test_err=test_err,
         validation_err=algo.best_cost,
-        runtime=algo.runtime
+        runtime=algo.runtime,
+        lambdas=algo.current_lambdas
     )
 
 if __name__ == "__main__":
