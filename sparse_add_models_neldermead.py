@@ -19,7 +19,7 @@ class Sparse_Add_Model_Nelder_Mead(Nelder_Mead_Algo):
             if l <= 0:
                 return self.MAX_COST
 
-        thetas = self.problem_wrapper.solve(lambdas)
+        thetas = self.problem_wrapper.solve(lambdas, quick_run=True)
         validation_cost = testerror_sparse_add_smooth(
             self.data.y_validate,
             self.data.validate_idx,
