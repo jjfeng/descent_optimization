@@ -19,14 +19,14 @@ class Spearmint_Algo:
         self.result_file = "%s/results.dat" % self.result_folder
 
     def run(self, num_runs):
-        runtime = 0
-        start_time = time.time()
         # Run spearmint to get next experiment parameters
         self.fmodel = Fitted_Model(self.num_lambdas)
 
         # Find new experiment
         best_cost = None
+        runtime = 0
         for i in range(num_runs):
+            start_time = time.time()
             print "%s: iter %d" % (self.method_label, i)
             self.run_spearmint_command(self.result_folder)
 
