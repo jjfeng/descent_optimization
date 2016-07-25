@@ -66,9 +66,12 @@ class Spearmint_Algo:
         self.run_spearmint_clean(self.result_folder)
 
     @staticmethod
-    def run_spearmint_command(experiment_folder, gridsize=20000):
-        cmd = "python2.7 spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d --method-args=use_multiprocessing=0" % gridsize
-        os.system("%s %s" % (cmd, experiment_folder))
+    def run_spearmint_command(experiment_folder, use_multiprocessing=True, gridsize=20000):
+        multiprocessing_option = ""
+        if not use_multiprocessing:
+            multiprocessing_option = "--method-args=use_multiprocessing=0"
+        cmd = "python2.7 spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d" % gridsize
+        os.system("%s %s %s" % (cmd, multiprocessing_option, experiment_folder))
 
     @staticmethod
     def run_spearmint_clean(experiment_folder):
