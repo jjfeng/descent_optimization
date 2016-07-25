@@ -43,22 +43,28 @@ class Spearmint_Algo:
                         # Run experiment
                         print "lambdas", lambdas
                         model_params = self._solve_problem(lambdas)
-                        current_cost = self.get_validation_cost(model_params)
+                        if model_params is None:
+                            current_cost = self.MAX_COST
+                        else:
+                            current_cost = self.get_validation_cost(model_params)
 
                         if best_cost is None or best_cost > current_cost:
                             best_cost = current_cost
                             self.fmodel.update(lambdas, model_params, current_cost)
+                            print "%s: %s" % (self.method_label, self.fmodel)
 
                         newlines.append(str(current_cost) + " 0 "
                                         + " ".join(values) + "\n")
                     else:
                         # Otherwise these are previous experiment results
                         newlines.append(line)
-                runtime += time.time() - start_time
 
-                # Don't record time spent on writing files?
-                with open(self.result_file, 'w') as resfile:
-                    resfile.writelines(newlines)
+            runtime += time.time() - start_time
+            # Don't record time spent on writing files?
+            with open(self.result_file, 'w') as resfile:
+                resfile.writelines(newlines)
+
+            sys.stdout.flush()
 
         self.fmodel.set_runtime(runtime)
 

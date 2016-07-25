@@ -4,6 +4,7 @@ from common import testerror_sparse_add_smooth
 from convexopt_solvers import SparseAdditiveModelProblemWrapper
 
 class Sparse_Add_Model_Spearmint(Spearmint_Algo):
+    method_label = "Sparse_Add_Model_Spearmint"
     result_folder = "spearmint_descent/sparse_add_model"
 
     def _create_problem_wrapper(self):
