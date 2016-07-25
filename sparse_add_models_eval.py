@@ -44,7 +44,7 @@ def main(argv):
     snr = 2
     gs_lambdas1 = [0.125, 0.25, 0.5, 1, 2]
     gs_lambdas2 = gs_lambdas1
-    spearmint_numruns = 30
+    spearmint_numruns = 25
     seed = 10
 
     np.random.seed(seed)
