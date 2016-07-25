@@ -46,6 +46,7 @@ def main(argv):
     spearmint_numruns = 100
     nm_iters = 80
     seed = 10
+    method = "HC"
 
     np.random.seed(seed)
 
