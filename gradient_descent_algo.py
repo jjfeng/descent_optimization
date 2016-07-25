@@ -35,7 +35,7 @@ class Gradient_Descent_Algo:
         # warm up the problem
         self.problem_wrapper.solve(initial_lambdas, quick_run=True)
         # do a real run now
-        model_params = self.problem_wrapper.solve(initial_lambdas)
+        model_params = self.problem_wrapper.solve(initial_lambdas, quick_run=False)
         # Check that no model params are None
         assert(not self._any_model_params_none(model_params))
 

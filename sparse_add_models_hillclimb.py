@@ -89,7 +89,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         )
         sum_dtheta_dlambda = self._get_sum_dtheta_dlambda(beta_u_forms, nonzero_thetas_idx)
         fitted_y_validate = np.sum(self.fmodel.current_model_params[self.data.validate_idx, :], axis=1)
-        dloss_dlambda = -1 * sum_dtheta_dlambda[self.data.validate_idx, :].T * (self.data.y_validate - fitted_y_validate)
+        dloss_dlambda = -1.0/self.data.y_validate.size * sum_dtheta_dlambda[self.data.validate_idx, :].T * (self.data.y_validate - fitted_y_validate)
         print "dloss_dlambda", dloss_dlambda
         return dloss_dlambda.A1 # flatten the matrix
 
@@ -161,12 +161,12 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
             eps = min(epsilon, self.fmodel.current_lambdas[i]/100)
             reg1 = [r for r in self.fmodel.current_lambdas]
             reg1[i] += eps
-            thetas1 = self.problem_wrapper.solve(np.array(reg1), quick_run=True)
+            thetas1 = self.problem_wrapper.solve(np.array(reg1), quick_run=False)
             error1 = self.get_validate_cost(thetas1)
 
             reg2 = [r for r in self.fmodel.current_lambdas]
             reg2[i] -= eps
-            thetas2 = self.problem_wrapper.solve(np.array(reg2), quick_run=True)
+            thetas2 = self.problem_wrapper.solve(np.array(reg2), quick_run=False)
             error2 = self.get_validate_cost(thetas2)
             i_deriv = (error1 - error2)/(epsilon * 2)
             print "numerical sum_dthetas_dlambda", np.sum((thetas1 - thetas2)/(epsilon * 2), axis=1)
