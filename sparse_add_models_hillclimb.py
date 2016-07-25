@@ -51,7 +51,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         self.step_size_init = 1
         self.step_size_min = 1e-6
         self.shrink_factor = 0.1
-        self.decr_enough_threshold = 0.1
+        self.decr_enough_threshold = 0.0001
         self.use_boundary = True
         self.boundary_factor = 0.999999
         self.backtrack_alpha = 0.001
