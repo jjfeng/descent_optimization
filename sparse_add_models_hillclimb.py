@@ -77,6 +77,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
     def _get_lambda_derivatives(self):
         # First filter out the thetas that are completely zero
         nonzero_thetas_idx = self._get_nonzero_theta_vectors(self.fmodel.current_model_params)
+        print "nonzero_thetas_idx", nonzero_thetas_idx
         # Now reformulate the remaining thetas using the differentiable space
         nonzeros_idx = np.where(nonzero_thetas_idx)[0]
 
