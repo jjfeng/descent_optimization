@@ -143,6 +143,7 @@ def fit_data_for_iter(iter_data):
     settings = iter_data.settings
     initial_lambdas = np.ones(1 + settings.num_funcs + settings.num_zero_funcs)
     initial_lambdas[0] = 10
+    initial_lambdas_set = [initial_lambdas * 0.01, initial_lambdas]
     method = iter_data.settings.method
 
     str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d" % (
@@ -161,13 +162,13 @@ def fit_data_for_iter(iter_data):
     with open(log_file_name, "w", buffering=0) as f:
         if method == "NM":
             algo = Sparse_Add_Model_Nelder_Mead(iter_data.data)
-            algo.run(initial_lambdas, num_iters=settings.nm_iters, log_file=f)
+            algo.run(initial_lambdas_set, num_iters=settings.nm_iters, log_file=f)
         elif method == "GS":
             algo = Sparse_Add_Model_Grid_Search(iter_data.data)
             algo.run(lambdas1=settings.gs_lambdas1, lambdas2=settings.gs_lambdas2, log_file=f)
         elif method == "HC":
             algo = Sparse_Add_Model_Hillclimb(iter_data.data)
-            algo.run([initial_lambdas * 0.01, initial_lambdas], debug=False, log_file=f)
+            algo.run(initial_lambdas_set, debug=False, log_file=f)
         elif method == "SP":
             algo = Sparse_Add_Model_Spearmint(iter_data.data, str_identifer)
             algo.run(settings.spearmint_numruns, log_file=f)

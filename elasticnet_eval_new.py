@@ -58,16 +58,16 @@ def main(argv):
         elif opt == '-z':
             settings.num_nonzero_features = int(arg)
         elif opt == '-a':
-            train_size = int(arg)
+            settings.train_size = int(arg)
         elif opt == '-b':
-            validate_size = int(arg)
+            settings.validate_size = int(arg)
         elif opt == '-c':
-            test_size = int(arg)
+            settings.test_size = int(arg)
         elif opt == "-s":
-            snr = float(arg)
+            settings.snr = float(arg)
         elif opt == "-m":
             assert(arg in METHODS)
-            method = arg
+            settings.method = arg
         elif opt == "-t":
             num_threads = int(arg)
         elif opt == "-r":
@@ -116,7 +116,7 @@ def fit_data_for_iter_safe(iter_data):
 def fit_data_for_iter(iter_data):
     settings = iter_data.settings
     one_vec = np.ones(2)
-    initial_lambdas = [one_vec * 1e-2, one_vec * 1e1]
+    initial_lambdas_set = [one_vec * 1e-2, one_vec * 1e1]
     method = iter_data.settings.method
 
     str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d" % (
@@ -134,7 +134,7 @@ def fit_data_for_iter(iter_data):
     with open(log_file_name, "w") as f:
         if method == "NM":
             algo = Elastic_Net_Nelder_Mead(iter_data.data)
-            algo.run(initial_lambdas, num_iters=settings.nm_iters, log_file=f)
+            algo.run(initial_lambdas_set, num_iters=settings.nm_iters, log_file=f)
         elif method == "GS":
             largest_eigenvalue = max(np.linalg.eigvalsh(self.data.X_train.T * self.data.X_train))
             max_power = np.log(largest_eigenvalue * settings.gs_eigen_factor)
@@ -145,7 +145,7 @@ def fit_data_for_iter(iter_data):
             algo.run(lambdas1=gs_lambdas, lambdas2=gs_lambdas, log_file=f)
         elif method == "HC":
             algo = Elastic_Net_Hillclimb(iter_data.data)
-            algo.run(initial_lambdas, debug=False, log_file=f)
+            algo.run(initial_lambdas_set, debug=False, log_file=f)
         elif method == "SP":
             algo = Elastic_Net_Spearmint(iter_data.data, str_identifer)
             algo.run(settings.spearmint_numruns, log_file=f)

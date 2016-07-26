@@ -1,13 +1,13 @@
 from common import testerror_elastic_net
 from neldermead import Nelder_Mead_Algo
-from convexopt_solvers import Lambda12ProblemWrapper
+from convexopt_solvers import ElasticNetProblemWrapper
 
 class Elastic_Net_Nelder_Mead(Nelder_Mead_Algo):
     method_label = "Elastic_Net_Nelder_Mead"
     MAX_COST = 100000
 
     def _create_problem_wrapper(self):
-        self.problem_wrapper = Lambda12ProblemWrapper(
+        self.problem_wrapper = ElasticNetProblemWrapper(
             self.data.X_train,
             self.data.y_train
         )
