@@ -25,13 +25,13 @@ class ObservedData:
         self.test_idx = np.arange(self.num_train + self.num_validate, self.num_train + self.num_validate + self.num_test)
 
 class DataGenerator:
-    def __init__(self, train_size, validate_size, test_size, feat_range, snr=2):
-        self.train_size = train_size
-        self.validate_size = validate_size
-        self.test_size = test_size
-        self.total_samples = train_size + validate_size + test_size
-        self.snr = snr
-        self.feat_range = feat_range
+    def __init__(self, settings):
+        self.train_size = settings.train_size
+        self.validate_size = settings.validate_size
+        self.test_size = settings.test_size
+        self.total_samples = settings.train_size + settings.validate_size + settings.test_size
+        self.snr = settings.snr
+        self.feat_range = settings.feat_range
 
     def make_additive_smooth_data(self, smooth_fcn_list):
         self.num_features = len(smooth_fcn_list)

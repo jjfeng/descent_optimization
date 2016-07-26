@@ -17,10 +17,10 @@ class MethodResults:
     def print_results(self):
         if len(self.validation_errs) > 0:
             print self.method_name, "Results: (mean, std dev)"
-            print "beta: %.4f, %.4f" % (np.average(self.beta_errs), np.var(self.beta_errs))
             print "validation: %.4f, %.4f" % (np.average(self.validation_errs), np.var(self.validation_errs))
             print "test: %.4f, %.4f" % (np.average(self.test_errs), np.var(self.test_errs))
-
+            if len(self.beta_errs):
+                print "beta: %.4f, %.4f" % (np.average(self.beta_errs), np.var(self.beta_errs))
             if len(self.theta_errs):
                 print "theta: %.4f, %.4f" % (np.average(self.theta_errs), np.var(self.theta_errs))
             if len(self.sensitivities):

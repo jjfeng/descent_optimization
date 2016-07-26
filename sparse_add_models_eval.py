@@ -2,6 +2,7 @@ import getopt
 import time
 import sys
 import numpy as np
+from multiprocessing import Pool
 
 from sparse_add_models_hillclimb import Sparse_Add_Model_Hillclimb
 from sparse_add_models_neldermead import Sparse_Add_Model_Nelder_Mead
@@ -10,11 +11,32 @@ from sparse_add_models_spearmint import Sparse_Add_Model_Spearmint
 from data_generator import DataGenerator
 from method_results import MethodResults
 from method_results import MethodResult
+from iteration_models import Simulation_Settings, Iteration_Data
 
 from common import *
 
-NUM_RUNS = 30
+NUM_RUNS = 8
 METHODS = ["NM", "HC", "GS", "SP"]
+
+class Sparse_Add_Models_Settings(Simulation_Settings):
+    num_funcs = 2
+    num_zero_funcs = 2
+    gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/10))
+    gs_lambdas2 = gs_lambdas1
+    spearmint_numruns = 100
+    nm_iters = 80
+    method = "HC"
+
+    def print_settings(self):
+        print "SETTINGS"
+        obj_str = "method %s\n" % self.method
+        obj_str += "num_funcs %d\n" % self.num_funcs
+        obj_str += "num_zero_funcs %d\n" % self.num_zero_funcs
+        obj_str += "t/v/t size %d/%d/%d\n" % (self.train_size, self.validate_size, self.test_size)
+        obj_str += "snr %f\n" % self.snr
+        obj_str += "sp runs %d\n" % self.spearmint_numruns
+        obj_str += "nm_iters %d\n" % self.nm_iters
+        print obj_str
 
 def identity_fcn(x):
     return x.reshape(x.size, 1)
@@ -35,94 +57,85 @@ def const_zero(x):
     return np.zeros(x.shape)
 
 def main(argv):
-    num_funcs = 2
-    num_zero_funcs = 2
-    train_size = 100
-    validate_size = 50
-    test_size = 50
-    snr = 2
-    gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/10))
-    gs_lambdas2 = gs_lambdas1
-    spearmint_numruns = 100
-    nm_iters = 80
     seed = 10
-    method = "HC"
-
+    print "seed", seed
     np.random.seed(seed)
+    num_threads = 1
 
     try:
-        opts, args = getopt.getopt(argv,"f:z:a:b:c:s:m:")
+        opts, args = getopt.getopt(argv,"f:z:a:b:c:s:m:t:")
     except getopt.GetoptError:
         sys.exit(2)
 
+    settings = Sparse_Add_Models_Settings()
     for opt, arg in opts:
         if opt == '-f':
-            num_funcs = int(arg)
+            settings.num_funcs = int(arg)
         elif opt == '-z':
-            num_zero_funcs = int(arg)
+            settings.num_zero_funcs = int(arg)
         elif opt == '-a':
-            train_size = int(arg)
+            settings.train_size = int(arg)
         elif opt == '-b':
-            validate_size = int(arg)
+            settings.validate_size = int(arg)
         elif opt == '-c':
-            test_size = int(arg)
+            settings.test_size = int(arg)
         elif opt == "-s":
-            snr = float(arg)
+            settings.snr = float(arg)
         elif opt == "-m":
             assert(arg in METHODS)
-            method = arg
+            settings.method = arg
+        elif opt == "-t":
+            settings.num_threads = int(arg)
 
-    print "method", method
-    print "num_funcs", num_funcs
-    print "num_zero_funcs", num_zero_funcs
-    print "t/v/t size", train_size, validate_size, test_size
-    print "snr", snr
-    print "sp runs", spearmint_numruns
-    print "nm_iters", nm_iters
-    print "seed", seed
+    print settings.print_settings()
     sys.stdout.flush()
 
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
-    assert(num_funcs <= len(SMOOTH_FCNS))
-    smooth_fcn_list = SMOOTH_FCNS[:num_funcs] + [const_zero] * num_zero_funcs
-    data_gen = DataGenerator(train_size, validate_size, test_size, feat_range=[-5,5], snr=snr)
+    assert(settings.num_funcs <= len(SMOOTH_FCNS))
+    smooth_fcn_list = SMOOTH_FCNS[:settings.num_funcs] + [const_zero] * settings.num_zero_funcs
+    data_gen = DataGenerator(settings)
 
-    hc_results = MethodResults("Hillclimb")
-    nm_results = MethodResults("NelderMead")
-    gs_results = MethodResults("Gridsearch")
-    sp_results = MethodResults("Spearmint")
+    pool = Pool(num_threads)
+    run_data = []
     for i in range(NUM_RUNS):
         observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
+        run_data.append(Iteration_Data(observed_data, settings))
 
-        initial_lambdas = np.ones(1 + num_funcs + num_zero_funcs)
-        initial_lambdas[0] = 50
-        if method == "NM":
-            nm_algo = Sparse_Add_Model_Nelder_Mead(observed_data)
-            nm_algo.run(initial_lambdas, num_iters=nm_iters)
-            nm_results.append(create_method_result(observed_data, nm_algo.fmodel))
-            sys.stdout.flush()
-        elif method == "GS":
-            gs_algo = Sparse_Add_Model_Grid_Search(observed_data)
-            gs_algo.run(gs_lambdas1, gs_lambdas2)
-            gs_results.append(create_method_result(observed_data, gs_algo.fmodel))
-            sys.stdout.flush()
-        elif method == "HC":
-            hc_algo = Sparse_Add_Model_Hillclimb(observed_data)
-            hc_algo.run([initial_lambdas], debug=False)
-            hc_results.append(create_method_result(observed_data, hc_algo.fmodel))
-            sys.stdout.flush()
-        elif method == "SP":
-            sp_identifer = "%d_%d_%d_%d_%d_%d" % (num_funcs, num_zero_funcs, train_size, validate_size, test_size, snr)
-            sp_algo = Sparse_Add_Model_Spearmint(observed_data, sp_identifer)
-            sp_algo.run(spearmint_numruns)
-            sp_results.append(create_method_result(observed_data, sp_algo.fmodel))
+    results = pool.map(fit_data_for_iter, run_data)
+    method_results = MethodResults(settings.method)
+    for r in results:
+        method_results.append(r)
+    print "==========TOTAL RUNS %d============" % NUM_RUNS
+    method_results.print_results()
 
-        print "===========RUN %d ============" % i
-        hc_results.print_results()
-        nm_results.print_results()
-        gs_results.print_results()
-        sp_results.print_results()
-        sys.stdout.flush()
+def fit_data_for_iter(iter_data):
+    settings = iter_data.settings
+    initial_lambdas = np.ones(1 + settings.num_funcs + settings.num_zero_funcs)
+    initial_lambdas[0] = 30
+    method = iter_data.settings.method
+
+    if method == "NM":
+        algo = Sparse_Add_Model_Nelder_Mead(iter_data.data)
+        algo.run(initial_lambdas, num_iters=settings.nm_iters)
+    elif method == "GS":
+        algo = Sparse_Add_Model_Grid_Search(iter_data.data)
+        algo.run(gs_lambdas1, gs_lambdas2)
+    elif method == "HC":
+        algo = Sparse_Add_Model_Hillclimb(iter_data.data)
+        algo.run([initial_lambdas], debug=False)
+    elif method == "SP":
+        sp_identifer = "%d_%d_%d_%d_%d_%d" % (
+            settings.num_funcs,
+            settings.num_zero_funcs,
+            settings.train_size,
+            settings.validate_size,
+            settings.test_size,
+            settings.snr
+        )
+        algo = Sparse_Add_Model_Spearmint(iter_data.data, sp_identifer)
+        algo.run(spearmint_numruns)
+    sys.stdout.flush()
+    return create_method_result(iter_data.data, algo.fmodel)
 
 def create_method_result(data, algo):
     test_err = testerror_sparse_add_smooth(
