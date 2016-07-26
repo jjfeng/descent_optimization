@@ -77,7 +77,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
     def _get_lambda_derivatives(self):
         # First filter out the thetas that are completely zero
         nonzero_thetas_idx = self._get_nonzero_theta_vectors(self.fmodel.current_model_params)
-        print "nonzero_thetas_idx", nonzero_thetas_idx
+        self.log("nonzero_thetas_idx %s" % nonzero_thetas_idx)
         # Now reformulate the remaining thetas using the differentiable space
         nonzeros_idx = np.where(nonzero_thetas_idx)[0]
 
@@ -91,7 +91,6 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         sum_dtheta_dlambda = self._get_sum_dtheta_dlambda(beta_u_forms, nonzero_thetas_idx)
         fitted_y_validate = np.sum(self.fmodel.current_model_params[self.data.validate_idx, :], axis=1)
         dloss_dlambda = -1.0/self.data.y_validate.size * sum_dtheta_dlambda[self.data.validate_idx, :].T * (self.data.y_validate - fitted_y_validate)
-        print "dloss_dlambda", dloss_dlambda
         return dloss_dlambda.A1 # flatten the matrix
 
     def _get_sum_dtheta_dlambda(self, beta_u_forms, nonzero_thetas_idx):
@@ -149,12 +148,11 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         dbeta_dlambda, res, rank, _ = np.linalg.lstsq(hessian, -1 * rhs_matrix)
         # assert(uu.shape[0] == rank)  # Asserting for fun here. We have to make sure our Hessian is invertible. At least for now.
         if uu.shape[0] != rank:
-            print "Warning: not full rank: %d %d" % (uu.shape[0], rank)
+            self.log("Warning: not full rank: %d %d" % (uu.shape[0], rank))
         sum_dtheta_dlambda = u_matrices * dbeta_dlambda
         return sum_dtheta_dlambda
 
     def _double_check_derivative(self, calculated_derivative, accept_diff=1e-1, epsilon=1e-5):
-        print "double_check_derivative"
         deriv = []
         num_lambdas = len(self.fmodel.current_lambdas)
         for i in range(num_lambdas):
@@ -183,8 +181,6 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
 
     @staticmethod
     def _get_nonzero_theta_vectors(thetas, threshold=1e-8):
-        print "_get_nonzero_theta_vectors???"
-        print map(lambda i: np.linalg.norm(thetas[:,i], ord=2), range(thetas.shape[1]))
         nonzero_thetas_idx = map(lambda i: np.linalg.norm(thetas[:,i], ord=2) > threshold, range(thetas.shape[1]))
         return np.array(nonzero_thetas_idx)
 

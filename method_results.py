@@ -30,6 +30,10 @@ class MethodResults:
             print "average lambdas: %s" % np.mean(np.vstack(self.lambda_sets), axis=0)
 
     def append(self, result):
+        if result.validation_err == None:
+            # ignore input if no validation error. something went wrong with this run
+            return
+
         if result.test_err is not None:
             self.test_errs.append(result.test_err)
         else:
@@ -81,3 +85,16 @@ class MethodResult:
         self.runtime = runtime
         self.sensitivity = sensitivity
         self.lambdas = lambdas
+
+    def __str__(self):
+        return_str = "testerr %f\nvalidation_err %f\n" % (self.test_err, self.validation_err)
+        if self.beta_err is not None:
+            return_str += "beta_err %f\n" % self.beta_err
+        if self.theta_err is not None:
+            return_str += "theta_err %f\n" % self.theta_err
+        if self.sensitivity is not None:
+            return_str += "sensitivity %f\n" % self.sensitivity
+        if self.lambdas is not None:
+            return_str += "lambdas %s\n" % self.lambdas
+        return_str += "runtime %f\n" % self.runtime
+        return return_str

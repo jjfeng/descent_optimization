@@ -11,6 +11,7 @@ class Simulation_Settings:
     method = "HC"
 
 class Iteration_Data:
-    def __init__(self, data, settings):
+    def __init__(self, i, data, settings):
         self.data = data
         self.settings = settings
+        self.i = i

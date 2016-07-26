@@ -19,6 +19,7 @@ NUM_RUNS = 30
 METHODS = ["NM", "HC", "GS", "SP"]
 
 class Sparse_Add_Models_Settings(Simulation_Settings):
+    results_folder = "results/sparse_add_models"
     num_funcs = 2
     num_zero_funcs = 2
     gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/10))
@@ -99,14 +100,28 @@ def main(argv):
     run_data = []
     for i in range(NUM_RUNS):
         observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
-        run_data.append(Iteration_Data(observed_data, settings))
+        run_data.append(Iteration_Data(i, observed_data, settings))
 
-    results = pool.map(fit_data_for_iter, run_data)
+    results = pool.map(fit_data_for_iter_safe, run_data)
     method_results = MethodResults(settings.method)
+
+    num_crashes = 0
     for r in results:
-        method_results.append(r)
-    print "==========TOTAL RUNS %d============" % NUM_RUNS
+        if r is not None:
+            method_results.append(r)
+        else:
+            num_crashes += 1
+    print "==========TOTAL RUNS %d============" % method_results.get_num_runs()
     method_results.print_results()
+    print "num crashes %d" % num_crashes
+
+def fit_data_for_iter_safe(iter_data):
+    result = None
+    try:
+        result = fit_data_for_iter(iter_data)
+    except Exception as e:
+        print "Exception caught in iter %d: %s" % (iter_data.i, e)
+    return result
 
 def fit_data_for_iter(iter_data):
     settings = iter_data.settings
@@ -114,28 +129,36 @@ def fit_data_for_iter(iter_data):
     initial_lambdas[0] = 10
     method = iter_data.settings.method
 
-    if method == "NM":
-        algo = Sparse_Add_Model_Nelder_Mead(iter_data.data)
-        algo.run(initial_lambdas, num_iters=settings.nm_iters)
-    elif method == "GS":
-        algo = Sparse_Add_Model_Grid_Search(iter_data.data)
-        algo.run(gs_lambdas1, gs_lambdas2)
-    elif method == "HC":
-        algo = Sparse_Add_Model_Hillclimb(iter_data.data)
-        algo.run([initial_lambdas], debug=False)
-    elif method == "SP":
-        sp_identifer = "%d_%d_%d_%d_%d_%d" % (
-            settings.num_funcs,
-            settings.num_zero_funcs,
-            settings.train_size,
-            settings.validate_size,
-            settings.test_size,
-            settings.snr
-        )
-        algo = Sparse_Add_Model_Spearmint(iter_data.data, sp_identifer)
-        algo.run(spearmint_numruns)
-    sys.stdout.flush()
-    return create_method_result(iter_data.data, algo.fmodel)
+    str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d" % (
+        settings.num_funcs,
+        settings.num_zero_funcs,
+        settings.train_size,
+        settings.validate_size,
+        settings.test_size,
+        settings.snr,
+        method,
+        iter_data.i
+    )
+    log_file_name = "%s/log_%s.txt" % (settings.results_folder, str_identifer)
+    print "log_file_name", log_file_name
+    with open(log_file_name, "w") as f:
+        if method == "NM":
+            algo = Sparse_Add_Model_Nelder_Mead(iter_data.data)
+            algo.run(initial_lambdas, num_iters=settings.nm_iters, log_file=f)
+        elif method == "GS":
+            algo = Sparse_Add_Model_Grid_Search(iter_data.data)
+            algo.run(gs_lambdas1, gs_lambdas2, log_file=f)
+        elif method == "HC":
+            algo = Sparse_Add_Model_Hillclimb(iter_data.data)
+            algo.run([initial_lambdas], debug=False, log_file=f)
+        elif method == "SP":
+            algo = Sparse_Add_Model_Spearmint(iter_data.data, str_identifer)
+            algo.run(spearmint_numruns, log_file=f)
+        sys.stdout.flush()
+        method_res = create_method_result(iter_data.data, algo.fmodel)
+
+        f.write("SUMMARY\n%s" % method_res)
+    return method_res
 
 def create_method_result(data, algo):
     test_err = testerror_sparse_add_smooth(
