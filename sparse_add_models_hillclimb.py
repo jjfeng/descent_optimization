@@ -12,8 +12,9 @@ from gradient_descent_algo import Gradient_Descent_Algo
 class BetaForm:
     eps = 1e-8
 
-    def __init__(self, idx, theta, diff_matrix):
-        print "create beta form"
+    def __init__(self, idx, theta, diff_matrix, log_file):
+        self.log_file = log_file
+        self.log("create beta form")
         self.idx = idx
         self.theta = theta
         self.theta_norm = np.linalg.norm(theta, ord=None)
@@ -26,13 +27,16 @@ class BetaForm:
         # print "inflatedD", min(inflatedD.shape)
         # print "inflatedD.shape[0]", inflatedD.shape[0]
         u, s, v = sp.linalg.svd(inflatedD)
+        self.log("SVD done")
+        sys.stdout.flush()
         # u, s, v = sp.sparse.linalg.svds(inflatedD, k=inflatedD.shape[0]/2)
         null_mask = s <= self.eps
         null_space = sp.compress(null_mask, v, axis=0)
         null_matrix = np.matrix(sp.transpose(null_space))
-        beta, res, _, _ = np.linalg.lstsq(null_matrix, theta)
-
-        self.beta = np.matrix(beta)
+        # beta, res, _, _ = np.linalg.lstsq(null_matrix, theta)
+        beta, istop, itn, normr, normar, norma, conda, normx = sp.sparse.linalg.lsmr(null_matrix, theta.A1)
+        self.log("sp.sparse.linalg.lsmr done")
+        self.beta = np.matrix(beta).T
         self.u = null_matrix
 
         # Check that we reformulated theta but it is still very close to the original theta
@@ -40,6 +44,12 @@ class BetaForm:
         if np.linalg.norm(self.u * self.beta - self.theta, ord=2) > self.eps:
             print "Warning: Reformulation is off: diff %f" % np.linalg.norm(self.u * self.beta - self.theta, ord=2)
         print "create beta form success"
+
+    def log(self, log_str):
+        if self.log_file is None:
+            print log_str
+        else:
+            self.log_file.write("%s\n" % log_str)
 
     def __str__(self):
         return "beta %s, theta %s" % (self.beta, self.theta)
@@ -90,7 +100,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
             return np.array([0] * self.fmodel.num_lambdas)
 
         beta_u_forms = map(
-            lambda i: BetaForm(i, self.fmodel.current_model_params[:,i], self.problem_wrapper.diff_matrices[i]),
+            lambda i: BetaForm(i, self.fmodel.current_model_params[:,i], self.problem_wrapper.diff_matrices[i], log_file=self.log_file),
             nonzeros_idx
         )
         sum_dtheta_dlambda = self._get_sum_dtheta_dlambda(beta_u_forms, nonzero_thetas_idx)
