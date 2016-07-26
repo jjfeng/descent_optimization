@@ -1,5 +1,6 @@
 import sys
 import time
+from argparse import Namespace
 
 import numpy as np
 import scipy as sp
@@ -7,6 +8,8 @@ import scipy as sp
 import data_generation
 from common import *
 from fitted_model import Fitted_Model
+sys.path.insert(0, '/Users/jeanfeng/Documents/Research/descent_optimization/spearmint-master/spearmint-lite')
+spearmint_lite = __import__('spearmint-lite')
 
 class Spearmint_Algo:
     MAX_COST = 1e6
@@ -94,9 +97,22 @@ class Spearmint_Algo:
     def run_spearmint_command(experiment_folder, use_multiprocessing=True, gridsize=20000):
         multiprocessing_option = ""
         if not use_multiprocessing:
-            multiprocessing_option = "--method-args=use_multiprocessing=0"
-        cmd = "python2.7 spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d" % gridsize
-        os.system("%s %s %s" % (cmd, multiprocessing_option, experiment_folder))
+            multiprocessing_option = ",use_multiprocessing=0"
+        # cmd = "python2.7 spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d" % gridsize
+        options = Namespace(
+            chooser_module="GPEIOptChooser",
+            chooser_args="noiseless=1%s" % multiprocessing_option,
+            grid_size=gridsize,
+            config_file="config.json",
+            results_file="results.dat",
+            grid_seed=1,
+            num_jobs=1,
+            max_finished_jobs=1000
+        )
+        # print "options", options
+        # print "experiment_folder", experiment_folder
+        spearmint_lite.main_controller(options, [experiment_folder])
+        # os.system("%s %s %s" % (cmd, multiprocessing_option, experiment_folder))
 
     @staticmethod
     def run_spearmint_clean(experiment_folder):
