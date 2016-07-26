@@ -90,10 +90,6 @@ def main(argv):
         elif opt == "-r":
             num_runs = int(arg)
 
-    if settings.method == "SP":
-        # if running spearmint, can only run one thread cause spearmint spawns its own
-        settings.num_threads = 1
-
     settings.print_settings()
     sys.stdout.flush()
 
@@ -102,15 +98,20 @@ def main(argv):
     smooth_fcn_list = SMOOTH_FCNS[:settings.num_funcs] + [const_zero] * settings.num_zero_funcs
     data_gen = DataGenerator(settings)
 
-    pool = Pool(num_threads)
     run_data = []
     for i in range(num_runs):
         observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
         run_data.append(Iteration_Data(i, observed_data, settings))
 
-    results = pool.map(fit_data_for_iter_safe, run_data)
-    method_results = MethodResults(settings.method)
+    if settings.method != "SP":
+        print "Do multiprocessing"
+        pool = Pool(num_threads)
+        results = pool.map(fit_data_for_iter_safe, run_data)
+    else:
+        print "Avoiding multiprocessing"
+        results = map(fit_data_for_iter_safe, run_data)
 
+    method_results = MethodResults(settings.method)
     num_crashes = 0
     for r in results:
         if r is not None:
