@@ -34,9 +34,9 @@ class Gradient_Descent_Algo:
         self.log("%s: initial_lambdas %s" % (self.method_label, initial_lambdas))
         start_history_idx = len(self.fmodel.cost_history)
         # warm up the problem
-        self.problem_wrapper.solve(initial_lambdas, quick_run=True)
+        self._solve_wrapper(initial_lambdas, quick_run=True)
         # do a real run now
-        model_params = self.problem_wrapper.solve(initial_lambdas, quick_run=False)
+        model_params = self._solve_wrapper(initial_lambdas, quick_run=False)
         # Check that no model params are None
         if self._any_model_params_none(model_params):
             self.log("ERROR: No model params fit for initial lambda values")
@@ -117,7 +117,7 @@ class Gradient_Descent_Algo:
             lambda_derivatives
         )
         try:
-            potential_model_params = self.problem_wrapper.solve(potential_lambdas, quick_run=quick_run)
+            potential_model_params = self._solve_wrapper(potential_lambdas, quick_run=quick_run)
         except cvxpy.error.SolverError:
             potential_model_params = None
 
@@ -126,6 +126,12 @@ class Gradient_Descent_Algo:
         else:
             potential_cost = self.get_validate_cost(potential_model_params)
         return potential_lambdas, potential_model_params, potential_cost
+
+    def _solve_wrapper(self, lambdas, quick_run):
+        start_solve_time = time.time()
+        model_params = self.problem_wrapper.solve(lambdas, quick_run=quick_run)
+        self.log("CVX runtime %f" % time.time() - start_solve_time)
+        return model_params
 
     def _get_updated_lambdas(self, method_step_size, lambda_derivatives):
         current_lambdas = self.fmodel.current_lambdas
