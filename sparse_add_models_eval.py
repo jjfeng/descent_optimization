@@ -24,8 +24,6 @@ class Sparse_Add_Models_Settings(Simulation_Settings):
     num_zero_funcs = 2
     gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/10))
     gs_lambdas2 = gs_lambdas1
-    spearmint_numruns = 100
-    nm_iters = 80
     method = "HC"
 
     def print_settings(self):

@@ -4,7 +4,7 @@ class Simulation_Settings:
     test_size = 50
     snr = 2
     gs_num_lambdas = 10
-    spearmint_numruns = 100
+    spearmint_numruns = 50
     nm_iters = 80
     feat_range = [-5,5]
     method = "HC"

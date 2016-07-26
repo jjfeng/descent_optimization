@@ -25,8 +25,6 @@ class Elastic_Net_Settings(Simulation_Settings):
     num_nonzero_features = 15
     train_size = 80
     validate_size = 40
-    spearmint_numruns = 100
-    nm_iters = 80
     method = "HC"
 
     def print_settings(self):
