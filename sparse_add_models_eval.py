@@ -143,7 +143,7 @@ def fit_data_for_iter_safe(iter_data):
 def fit_data_for_iter(iter_data):
     settings = iter_data.settings
     initial_lambdas = np.ones(1 + settings.num_funcs + settings.num_zero_funcs)
-    initial_lambdas[0] = 5
+    initial_lambdas[0] = 10
     method = iter_data.settings.method
 
     str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d" % (
