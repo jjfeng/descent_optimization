@@ -5,7 +5,7 @@ TRAIN_TO_VALIDATE_RATIO = 4
 TEST_SIZE = 200
 
 # verbosity of convex optimization solver
-VERBOSE = True #False
+VERBOSE = False
 
 HC_LAMBDA12_LABEL = "HillclimbLambda12"
 HC_LAMBDA12_COLOR = "red"
