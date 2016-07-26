@@ -1,6 +1,7 @@
 import getopt
 import time
 import sys
+import traceback
 import numpy as np
 from multiprocessing import Pool
 
@@ -38,6 +39,9 @@ class Sparse_Add_Models_Settings(Simulation_Settings):
         obj_str += "nm_iters %d\n" % self.nm_iters
         print obj_str
 
+########
+# FUNCTIONS FOR ADDITIVE MODEL
+########
 def identity_fcn(x):
     return x.reshape(x.size, 1)
 
@@ -56,6 +60,9 @@ def pwr_small(x):
 def const_zero(x):
     return np.zeros(x.shape)
 
+#########
+# MAIN FUNCTION
+#########
 def main(argv):
     seed = 10
     print "seed", seed
@@ -122,12 +129,16 @@ def main(argv):
     method_results.print_results()
     print "num crashes %d" % num_crashes
 
+#########
+# FUNCTIONS FOR CHILD THREADS
+#########
 def fit_data_for_iter_safe(iter_data):
     result = None
     try:
         result = fit_data_for_iter(iter_data)
     except Exception as e:
         print "Exception caught in iter %d: %s" % (iter_data.i, e)
+        traceback.print_exc()
     return result
 
 def fit_data_for_iter(iter_data):

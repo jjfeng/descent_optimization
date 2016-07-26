@@ -44,7 +44,28 @@ class DataGenerator:
 
         return self._make_data(y_smooth, X_smooth)
 
+    def make_correlated(self, num_features, num_nonzero_features):
+        self.num_features = num_features
+        # Multiplying by the cholesky decomposition of the covariance matrix should suffice: http://www.sitmo.com/article/generating-correlated-random-numbers/
+        correlation_matrix = np.matrix([[np.power(0.5, abs(i - j)) for i in range(0, num_features)] for j in range(0, num_features)])
+        X = np.matrix(np.random.randn(self.total_samples, num_features)) * np.matrix(np.linalg.cholesky(correlation_matrix)).T
+
+        # beta real is a shuffled array of zeros and iid std normal values
+        beta_real = np.matrix(
+            np.concatenate((
+                np.ones((num_nonzero_features, 1)),
+                np.zeros((num_features - num_nonzero_features, 1))
+            ))
+        )
+        np.random.shuffle(beta_real)
+
+        true_y = X * beta_real
+        data = self._make_data(true_y, X)
+        data.beta_real = beta_real
+        return data
+
     def _make_data(self, true_y, observed_X):
+        # Given the true y and corresponding observed X values, this will add noise so that the SNR is correct
         epsilon = np.matrix(np.random.randn(self.total_samples, 1))
         SNR_factor = self.snr / np.linalg.norm(true_y) * np.linalg.norm(epsilon)
         observed_y = true_y + 1.0 / SNR_factor * epsilon

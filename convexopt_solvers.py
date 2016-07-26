@@ -23,11 +23,29 @@ class Lambda12ProblemWrapper:
             + 0.5 * self.lambda2 * sum_squares(self.beta))
         self.problem = Problem(objective, [])
 
-    def solve(self, lambda1, lambda2):
+    def solve(self, lambda1, lambda2, quick_run=None):
         self.lambda1.value = lambda1
         self.lambda2.value = lambda2
         result = self.problem.solve(solver=SCS, verbose=VERBOSE)
         # print "self.problem.status", self.problem.status
+        return self.beta.value
+
+# Objective function: 0.5 * norm(y - Xb)^2 + lambda1 * lasso + 0.5 * lambda2 * ridge
+class ElasticNetProblemWrapper:
+    def __init__(self, X, y):
+        n = X.shape[1]
+        self.beta = Variable(n)
+        self.lambda1 = Parameter(sign="positive")
+        self.lambda2 = Parameter(sign="positive")
+        objective = Minimize(0.5 * sum_squares(y - X * self.beta)
+            + self.lambda1 * norm(self.beta, 1)
+            + 0.5 * self.lambda2 * sum_squares(self.beta))
+        self.problem = Problem(objective, [])
+
+    def solve(self, lambdas, quick_run=None):
+        self.lambda1.value = lambdas[0]
+        self.lambda2.value = lambdas[1]
+        result = self.problem.solve(solver=SCS, verbose=VERBOSE)
         return self.beta.value
 
 # Objective function: 0.5 * norm(y - Xb)^2 + lambda * alpha * lasso + 0.5 * lambda * (1 - alpha) * ridge

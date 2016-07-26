@@ -79,7 +79,16 @@ class Spearmint_Algo:
         if self.log_file is None:
             print log_str
         else:
-            self.log_file.write(log_str)
+            self.log_file.write("%s\n" % log_str)
+
+    def _check_make_configs(self, folder_suffix):
+        self.result_folder = "%s%s" % (self.result_folder_prefix, folder_suffix)
+        if not os.path.exists(self.result_folder):
+            os.makedirs(self.result_folder)
+        config_file_name = "%s/config.json" % self.result_folder
+        if not os.path.exists(config_file_name):
+            with open(config_file_name, 'w') as config_file:
+                config_file.write(self._create_config_string(self.num_lambdas))
 
     @staticmethod
     def run_spearmint_command(experiment_folder, use_multiprocessing=True, gridsize=20000):

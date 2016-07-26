@@ -53,4 +53,4 @@ class Grid_Search:
         if self.log_file is None:
             print log_str
         else:
-            self.log_file.write(log_str)
+            self.log_file.write("%s\n" % log_str)
