@@ -143,6 +143,8 @@ def fit_data_for_iter(iter_data):
     settings = iter_data.settings
     initial_lambdas = np.ones(1 + settings.num_funcs + settings.num_zero_funcs)
     initial_lambdas[0] = 10
+    # Note that this produces quite different results from just having the latter set of lambda!
+    # Hypothesis: warmstarts finds some good lambdas so that gradient descent will do quite well eventually.
     initial_lambdas_set = [initial_lambdas * 0.01, initial_lambdas]
     method = iter_data.settings.method
 
@@ -161,9 +163,11 @@ def fit_data_for_iter(iter_data):
     # set file buffer to zero so we can see progress
     with open(log_file_name, "w", buffering=0) as f:
         if method == "NM":
+            # TODO: rerun NM with multiple starts too.
             algo = Sparse_Add_Model_Nelder_Mead(iter_data.data)
             algo.run(initial_lambdas_set, num_iters=settings.nm_iters, log_file=f)
         elif method == "GS":
+            # TODO: rerun GS with 10 values rather than the 5
             algo = Sparse_Add_Model_Grid_Search(iter_data.data)
             algo.run(lambdas1=settings.gs_lambdas1, lambdas2=settings.gs_lambdas2, log_file=f)
         elif method == "HC":

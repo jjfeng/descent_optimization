@@ -1,14 +1,14 @@
 import os
 from spearmint_algo import Spearmint_Algo
 from common import testerror_elastic_net
-from convexopt_solvers import Lambda12ProblemWrapper
+from convexopt_solvers import ElasticNetProblemWrapper
 
 class Elastic_Net_Spearmint(Spearmint_Algo):
     method_label = "Elastic_Net_Spearmint"
     result_folder_prefix = "spearmint_descent/elastic_net"
 
     def _create_problem_wrapper(self):
-        self.problem_wrapper = Lambda12ProblemWrapper(
+        self.problem_wrapper = ElasticNetProblemWrapper(
             self.data.X_train,
             self.data.y_train
         )

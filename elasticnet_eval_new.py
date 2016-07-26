@@ -20,7 +20,9 @@ from common import *
 
 class Elastic_Net_Settings(Simulation_Settings):
     results_folder = "results/elastic_net"
-    gs_eigen_factor = 4
+    num_gs_lambdas = 10
+    gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/num_gs_lambdas))
+    gs_lambdas2 = gs_lambdas1
     num_features = 250
     num_nonzero_features = 15
     train_size = 80
@@ -136,13 +138,8 @@ def fit_data_for_iter(iter_data):
             algo = Elastic_Net_Nelder_Mead(iter_data.data)
             algo.run(initial_lambdas_set, num_iters=settings.nm_iters, log_file=f)
         elif method == "GS":
-            largest_eigenvalue = max(np.linalg.eigvalsh(self.data.X_train.T * self.data.X_train))
-            max_power = np.log(largest_eigenvalue * settings.gs_eigen_factor)
-            min_power = np.log(1e-5)
-            gs_lambdas = np.power(np.e, np.arange(min_power, max_power, (max_power - min_power - 0.01) / settings.gs_num_lambdas))
-
             algo = Elastic_Net_Grid_Search(iter_data.data)
-            algo.run(lambdas1=gs_lambdas, lambdas2=gs_lambdas, log_file=f)
+            algo.run(lambdas1=settings.gs_lambdas1, lambdas2=settings.gs_lambdas2, log_file=f)
         elif method == "HC":
             algo = Elastic_Net_Hillclimb(iter_data.data)
             algo.run(initial_lambdas_set, debug=False, log_file=f)
