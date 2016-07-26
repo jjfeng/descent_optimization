@@ -34,6 +34,7 @@ class Spearmint_Algo:
             start_time = time.time()
             self.log("%s: iter %d" % (self.method_label, i))
             self.run_spearmint_command(self.result_folder)
+            self.log("Spearmint command completed")
 
             with open(self.result_file,'r') as resfile:
                 newlines = []
@@ -96,10 +97,11 @@ class Spearmint_Algo:
 
     @staticmethod
     def run_spearmint_command(experiment_folder, use_multiprocessing=True, gridsize=20000):
+        ## Note: not all machines have the capability of running spearmint without crashing.
+        ## Gosset servers will crash!
         multiprocessing_option = ""
         if not use_multiprocessing:
             multiprocessing_option = ",use_multiprocessing=0"
-        # cmd = "python2.7 spearmint-master/spearmint-lite/spearmint-lite.py --method=GPEIOptChooser --method-args=noiseless=1 --grid-size=%d" % gridsize
         options = Namespace(
             chooser_module="GPEIOptChooser",
             chooser_args="noiseless=1%s" % multiprocessing_option,
@@ -110,10 +112,7 @@ class Spearmint_Algo:
             num_jobs=1,
             max_finished_jobs=1000
         )
-        # print "options", options
-        # print "experiment_folder", experiment_folder
         spearmint_lite.main_controller(options, [experiment_folder])
-        # os.system("%s %s %s" % (cmd, multiprocessing_option, experiment_folder))
 
     @staticmethod
     def run_spearmint_clean(experiment_folder):
