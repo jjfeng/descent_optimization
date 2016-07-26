@@ -15,7 +15,6 @@ from iteration_models import Simulation_Settings, Iteration_Data
 
 from common import *
 
-NUM_RUNS = 30
 METHODS = ["NM", "HC", "GS", "SP"]
 
 class Sparse_Add_Models_Settings(Simulation_Settings):
@@ -62,9 +61,10 @@ def main(argv):
     print "seed", seed
     np.random.seed(seed)
     num_threads = 1
+    num_runs = 30
 
     try:
-        opts, args = getopt.getopt(argv,"f:z:a:b:c:s:m:t:")
+        opts, args = getopt.getopt(argv,"f:z:a:b:c:s:m:t:r:")
     except getopt.GetoptError:
         sys.exit(2)
 
@@ -87,6 +87,8 @@ def main(argv):
             settings.method = arg
         elif opt == "-t":
             settings.num_threads = int(arg)
+        elif opt == "-r":
+            num_runs = int(arg)
 
     settings.print_settings()
     sys.stdout.flush()
@@ -98,7 +100,7 @@ def main(argv):
 
     pool = Pool(num_threads)
     run_data = []
-    for i in range(NUM_RUNS):
+    for i in range(num_runs):
         observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
         run_data.append(Iteration_Data(i, observed_data, settings))
 
