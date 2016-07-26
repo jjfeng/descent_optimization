@@ -87,7 +87,7 @@ def main(argv):
         elif opt == "-t":
             settings.num_threads = int(arg)
 
-    print settings.print_settings()
+    settings.print_settings()
     sys.stdout.flush()
 
     SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
