@@ -130,7 +130,7 @@ class Gradient_Descent_Algo:
     def _solve_wrapper(self, lambdas, quick_run):
         start_solve_time = time.time()
         model_params = self.problem_wrapper.solve(lambdas, quick_run=quick_run)
-        self.log("CVX runtime %f" % time.time() - start_solve_time)
+        self.log("CVX runtime %f" % (time.time() - start_solve_time))
         return model_params
 
     def _get_updated_lambdas(self, method_step_size, lambda_derivatives):

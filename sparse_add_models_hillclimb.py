@@ -13,6 +13,7 @@ class BetaForm:
     eps = 1e-8
 
     def __init__(self, idx, theta, diff_matrix):
+        print "create beta form"
         self.idx = idx
         self.theta = theta
         self.theta_norm = np.linalg.norm(theta, ord=None)
@@ -22,7 +23,10 @@ class BetaForm:
         zero_theta_idx = self._get_zero_theta_indices(diff_matrix * theta)
         inflatedD = np.zeros(diff_matrix.shape)
         inflatedD[:np.sum(zero_theta_idx),:] = diff_matrix[zero_theta_idx,:]
+        # print "inflatedD", min(inflatedD.shape)
+        # print "inflatedD.shape[0]", inflatedD.shape[0]
         u, s, v = sp.linalg.svd(inflatedD)
+        # u, s, v = sp.sparse.linalg.svds(inflatedD, k=inflatedD.shape[0]/2)
         null_mask = s <= self.eps
         null_space = sp.compress(null_mask, v, axis=0)
         null_matrix = np.matrix(sp.transpose(null_space))
@@ -35,6 +39,7 @@ class BetaForm:
         # assert(res.size == 0 or res < self.eps)
         if np.linalg.norm(self.u * self.beta - self.theta, ord=2) > self.eps:
             print "Warning: Reformulation is off: diff %f" % np.linalg.norm(self.u * self.beta - self.theta, ord=2)
+        print "create beta form success"
 
     def __str__(self):
         return "beta %s, theta %s" % (self.beta, self.theta)
