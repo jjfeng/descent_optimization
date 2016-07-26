@@ -15,7 +15,7 @@ from iteration_models import Simulation_Settings, Iteration_Data
 
 from common import *
 
-NUM_RUNS = 8
+NUM_RUNS = 30
 METHODS = ["NM", "HC", "GS", "SP"]
 
 class Sparse_Add_Models_Settings(Simulation_Settings):
