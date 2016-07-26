@@ -8,6 +8,7 @@ import scipy as sp
 import data_generation
 from common import *
 from fitted_model import Fitted_Model
+sys.path.insert(0, 'spearmint-master/spearmint')
 sys.path.insert(0, 'spearmint-master/spearmint-lite')
 spearmint_lite = __import__('spearmint-lite')
 
