@@ -1,4 +1,5 @@
 import sys
+import time
 import scipy as sp
 from scipy.sparse.linalg import spsolve, lsqr
 from fitted_model import Fitted_Model
@@ -17,33 +18,29 @@ class BetaForm:
         self.log("create beta form")
         self.idx = idx
         self.theta = theta
-        self.theta_norm = np.linalg.norm(theta, ord=None)
+        self.theta_norm = sp.linalg.norm(theta, ord=None)
         self.diff_matrix = diff_matrix
 
         # Find the null space for the subsetted diff matrix
+        start = time.time()
         zero_theta_idx = self._get_zero_theta_indices(diff_matrix * theta)
-        inflatedD = np.zeros(diff_matrix.shape)
-        inflatedD[:np.sum(zero_theta_idx),:] = diff_matrix[zero_theta_idx,:]
-        # print "inflatedD", min(inflatedD.shape)
-        # print "inflatedD.shape[0]", inflatedD.shape[0]
-        u, s, v = sp.linalg.svd(inflatedD)
-        self.log("SVD done")
-        sys.stdout.flush()
-        # u, s, v = sp.sparse.linalg.svds(inflatedD, k=inflatedD.shape[0]/2)
-        null_mask = s <= self.eps
+        u, s, v = sp.linalg.svd(diff_matrix[zero_theta_idx,:])
+        self.log("SVD done %f" % (time.time() - start))
+        null_mask = np.ones(v.shape[1])
+        null_mask[:s.size] = s <= self.eps
         null_space = sp.compress(null_mask, v, axis=0)
         null_matrix = np.matrix(sp.transpose(null_space))
-        # beta, res, _, _ = np.linalg.lstsq(null_matrix, theta)
+        start = time.time()
         beta, istop, itn, normr, normar, norma, conda, normx = sp.sparse.linalg.lsmr(null_matrix, theta.A1)
-        self.log("sp.sparse.linalg.lsmr done")
+        self.log("sp.sparse.linalg.lsmr done %f" % (time.time() - start))
         self.beta = np.matrix(beta).T
         self.u = null_matrix
 
         # Check that we reformulated theta but it is still very close to the original theta
         # assert(res.size == 0 or res < self.eps)
-        if np.linalg.norm(self.u * self.beta - self.theta, ord=2) > self.eps:
-            print "Warning: Reformulation is off: diff %f" % np.linalg.norm(self.u * self.beta - self.theta, ord=2)
-        print "create beta form success"
+        if sp.linalg.norm(self.u * self.beta - self.theta, ord=2) > self.eps:
+            self.log("Warning: Reformulation is off: diff %f" % sp.linalg.norm(self.u * self.beta - self.theta, ord=2))
+        self.log("create beta form success")
 
     def log(self, log_str):
         if self.log_file is None:
@@ -158,12 +155,17 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         u_matrices = np.hstack(u_matrices)
         uu = u_matrices.T * self.train_I.T * self.train_I * u_matrices
         tiny_e_matrix = self.problem_wrapper.tiny_e * np.eye(uu.shape[0])
-        # print "zeroed hessian?", self._zero_theta_indices(uu + lambda0 * b_diag + tiny_e_matrix)
         hessian = uu + lambda0 * b_diag + tiny_e_matrix
-        dbeta_dlambda, res, rank, _ = np.linalg.lstsq(hessian, -1 * rhs_matrix)
-        # assert(uu.shape[0] == rank)  # Asserting for fun here. We have to make sure our Hessian is invertible. At least for now.
-        if uu.shape[0] != rank:
-            self.log("Warning: not full rank: %d %d" % (uu.shape[0], rank))
+        start = time.time()
+        dbeta_dlambda = map(
+            lambda j: np.matrix(sp.sparse.linalg.lsmr(hessian, -1 * rhs_matrix[:,j].A1)[0]).T,
+            range(rhs_matrix.shape[1])
+        )
+        dbeta_dlambda = np.hstack(dbeta_dlambda)
+        print "lsmr time %f" % (time.time() - start)
+        # assert(uu.shape[0] == rank)  # We want to make sure our Hessian is invertible. At least for now.
+        # if uu.shape[0] != rank:
+        #     self.log("Warning: not full rank: %d %d" % (uu.shape[0], rank))
         sum_dtheta_dlambda = u_matrices * dbeta_dlambda
         return sum_dtheta_dlambda
 
@@ -196,7 +198,7 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
 
     @staticmethod
     def _get_nonzero_theta_vectors(thetas, threshold=1e-8):
-        nonzero_thetas_idx = map(lambda i: np.linalg.norm(thetas[:,i], ord=2) > threshold, range(thetas.shape[1]))
+        nonzero_thetas_idx = map(lambda i: sp.linalg.norm(thetas[:,i], ord=2) > threshold, range(thetas.shape[1]))
         return np.array(nonzero_thetas_idx)
 
     @staticmethod
