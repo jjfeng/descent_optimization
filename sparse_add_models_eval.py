@@ -111,7 +111,7 @@ def main(argv):
 def fit_data_for_iter(iter_data):
     settings = iter_data.settings
     initial_lambdas = np.ones(1 + settings.num_funcs + settings.num_zero_funcs)
-    initial_lambdas[0] = 30
+    initial_lambdas[0] = 10
     method = iter_data.settings.method
 
     if method == "NM":
