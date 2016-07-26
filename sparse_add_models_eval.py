@@ -158,7 +158,8 @@ def fit_data_for_iter(iter_data):
     )
     log_file_name = "%s/tmp/log_%s.txt" % (settings.results_folder, str_identifer)
     print "log_file_name", log_file_name
-    with open(log_file_name, "w") as f:
+    # set file buffer to zero so we can see progress
+    with open(log_file_name, "w", buffering=0) as f:
         if method == "NM":
             algo = Sparse_Add_Model_Nelder_Mead(iter_data.data)
             algo.run(initial_lambdas, num_iters=settings.nm_iters, log_file=f)
