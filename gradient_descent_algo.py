@@ -49,8 +49,7 @@ class Gradient_Descent_Algo:
 
         step_size = self.step_size_init
         for i in range(0, self.num_iters):
-            lambda_derivatives = self._get_lambda_derivatives()
-            self.log("lambda_derivatives %s" % lambda_derivatives)
+            lambda_derivatives = self._get_lambda_derivatives_wrapper()
 
             if debug:
                 self._double_check_derivative(lambda_derivatives)
@@ -132,6 +131,13 @@ class Gradient_Descent_Algo:
         model_params = self.problem_wrapper.solve(lambdas, quick_run=quick_run)
         self.log("CVX runtime %f" % (time.time() - start_solve_time))
         return model_params
+
+    def _get_lambda_derivatives_wrapper(self):
+        start_solve_time = time.time()
+        lambda_derivatives = self._get_lambda_derivatives()
+        self.log("lambda_derivatives runtime %f" % (time.time() - start_solve_time))
+        self.log("lambda_derivatives %s" % lambda_derivatives)
+        return lambda_derivatives
 
     def _get_updated_lambdas(self, method_step_size, lambda_derivatives):
         current_lambdas = self.fmodel.current_lambdas
