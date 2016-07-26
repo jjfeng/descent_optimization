@@ -156,13 +156,14 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         uu = u_matrices.T * self.train_I.T * self.train_I * u_matrices
         tiny_e_matrix = self.problem_wrapper.tiny_e * np.eye(uu.shape[0])
         hessian = uu + lambda0 * b_diag + tiny_e_matrix
+
         start = time.time()
         dbeta_dlambda = map(
             lambda j: np.matrix(sp.sparse.linalg.lsmr(hessian, -1 * rhs_matrix[:,j].A1)[0]).T,
             range(rhs_matrix.shape[1])
         )
         dbeta_dlambda = np.hstack(dbeta_dlambda)
-        print "lsmr time %f" % (time.time() - start)
+        self.log("lsmr time %f" % (time.time() - start))
         # assert(uu.shape[0] == rank)  # We want to make sure our Hessian is invertible. At least for now.
         # if uu.shape[0] != rank:
         #     self.log("Warning: not full rank: %d %d" % (uu.shape[0], rank))

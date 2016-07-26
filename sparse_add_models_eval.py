@@ -95,6 +95,7 @@ def main(argv):
         elif opt == "-r":
             num_runs = int(arg)
 
+    print "TOTAL NUM RUNS %d" % num_runs
     settings.print_settings()
     sys.stdout.flush()
 
