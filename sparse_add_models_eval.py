@@ -22,7 +22,8 @@ class Sparse_Add_Models_Settings(Simulation_Settings):
     results_folder = "results/sparse_add_models"
     num_funcs = 2
     num_zero_funcs = 2
-    gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/10))
+    # gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/10))
+    gs_lambdas1 = np.power(10, np.arange(-3, 1, 6.999/5))
     gs_lambdas2 = gs_lambdas1
     method = "HC"
 
