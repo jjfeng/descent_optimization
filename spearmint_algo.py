@@ -91,7 +91,7 @@ class Spearmint_Algo:
                 config_file.write(self._create_config_string(self.num_lambdas))
 
     @staticmethod
-    def run_spearmint_command(experiment_folder, use_multiprocessing=True, gridsize=20000):
+    def run_spearmint_command(experiment_folder, use_multiprocessing=False, gridsize=20000):
         multiprocessing_option = ""
         if not use_multiprocessing:
             multiprocessing_option = "--method-args=use_multiprocessing=0"
