@@ -7,6 +7,8 @@ TEST_SIZE = 200
 # verbosity of convex optimization solver
 VERBOSE = False
 
+METHODS = ["NM", "HC", "GS", "SP"]
+
 HC_LAMBDA12_LABEL = "HillclimbLambda12"
 HC_LAMBDA12_COLOR = "red"
 HC_LAMBDA12_DIM_LABEL = "HillclimbLambda12Dim"

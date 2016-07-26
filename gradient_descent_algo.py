@@ -22,7 +22,7 @@ class Gradient_Descent_Algo:
         self.fmodel = Fitted_Model(initial_lambda_set[0].size)
         best_cost = None
         for initial_lambdas in initial_lambda_set:
-            self._run_lambdas(initial_lambdas, debug=debug)
+            self._run_lambdas(initial_lambdas, debug=debug) #, max_cost_at_iter=best_cost, check_iter=self.check_iter)
             if best_cost != self.fmodel.best_cost:
                 self.log("%s: best start lambda %s" % (self.method_label, initial_lambdas))
 
@@ -30,7 +30,7 @@ class Gradient_Descent_Algo:
         self.log("%s: runtime %s" % (self.method_label, runtime))
         self.fmodel.set_runtime(runtime)
 
-    def _run_lambdas(self, initial_lambdas, debug=True):
+    def _run_lambdas(self, initial_lambdas, debug=True): #, max_cost_at_iter=None, check_iter=None):
         self.log("%s: initial_lambdas %s" % (self.method_label, initial_lambdas))
         start_history_idx = len(self.fmodel.cost_history)
         # warm up the problem
@@ -98,6 +98,11 @@ class Gradient_Descent_Algo:
             if step_size < self.step_size_min:
                 self.log("STEP SIZE TOO SMALL %f" % step_size)
                 break
+
+            # if check_iter is not None and max_cost_at_iter is not None and check_iter == i and max_cost_at_iter < potential_cost:
+            #     self.log("Cost %f higher than threshold %f" % (potential_cost, max_cost_at_iter))
+            #     break
+
             sys.stdout.flush()
 
         self.log("TOTAL ITERS %d" % i)

@@ -46,10 +46,13 @@ class Elastic_Net_Hillclimb(Gradient_Descent_Algo):
         betas_mini = betas[nonzero_indices]
 
         eye_matrix = np.matrix(np.identity(betas_mini.size))
+        # Note: on certain computers, it will be difficult to run X_train_mini.T * X_train_mini in parallel
         to_invert_matrix = X_train_mini.T * X_train_mini + self.fmodel.current_lambdas[1] * eye_matrix
 
-        dbeta_dlambda1, _, _, _ = np.linalg.lstsq(to_invert_matrix, -1 * np.sign(betas_mini))
-        dbeta_dlambda2, _, _, _ = np.linalg.lstsq(to_invert_matrix, -1 * betas_mini)
+        dbeta_dlambda1, istop, itn, normr, normar, norma, conda, normx = sp.sparse.linalg.lsmr(to_invert_matrix, -1 * np.sign(betas_mini).A1)
+        dbeta_dlambda1 = np.matrix(dbeta_dlambda1).T
+        dbeta_dlambda2, istop, itn, normr, normar, norma, conda, normx = sp.sparse.linalg.lsmr(to_invert_matrix, -1 * betas_mini.A1)
+        dbeta_dlambda2 = np.matrix(dbeta_dlambda2).T
 
         err_vector = self.data.y_validate - X_validate_mini * betas_mini
         gradient_lambda1 = -1 * (X_validate_mini * dbeta_dlambda1).T * err_vector

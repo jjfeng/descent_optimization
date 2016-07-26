@@ -16,8 +16,6 @@ from iteration_models import Simulation_Settings, Iteration_Data
 
 from common import *
 
-METHODS = ["NM", "HC", "GS", "SP"]
-
 class Sparse_Add_Models_Settings(Simulation_Settings):
     results_folder = "results/sparse_add_models"
     num_funcs = 2

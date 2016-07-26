@@ -16,7 +16,7 @@ from data_generator import DataGenerator
 from method_results import MethodResults
 from method_results import MethodResult
 
-from common import testerror_elastic_net, betaerror
+from common import *
 
 class Elastic_Net_Settings(Simulation_Settings):
     results_folder = "results/elastic_net"
@@ -82,7 +82,7 @@ def main(argv):
         observed_data = data_gen.make_correlated(settings.num_features, settings.num_nonzero_features)
         run_data.append(Iteration_Data(i, observed_data, settings))
 
-    if settings.method != "SP":
+    if settings.method != "SP" and num_threads > 1:
         print "Do multiprocessing"
         pool = Pool(num_threads)
         results = pool.map(fit_data_for_iter_safe, run_data)
@@ -115,7 +115,6 @@ def fit_data_for_iter_safe(iter_data):
 
 def fit_data_for_iter(iter_data):
     settings = iter_data.settings
-    COARSE_LAMBDA_GRID = [1e-2, 1e1]
     one_vec = np.ones(2)
     initial_lambdas = [one_vec * 1e-2, one_vec * 1e1]
     method = iter_data.settings.method
