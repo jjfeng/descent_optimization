@@ -31,8 +31,8 @@ class BetaForm:
         null_space = sp.compress(null_mask, v, axis=0)
         null_matrix = np.matrix(sp.transpose(null_space))
         start = time.time()
-        beta, istop, itn, normr, normar, norma, conda, normx = sp.sparse.linalg.lsmr(null_matrix, theta.A1)
-        self.log("sp.sparse.linalg.lsmr done %f" % (time.time() - start))
+        beta, istop, itn, normr, normar, norma, conda, normx = sp.sparse.linalg.lsmr(null_matrix, theta.A1, atol=self.eps, btol=self.eps)
+        self.log("sp.sparse.linalg.lsmr done %f, istop %d, itn %d" % ((time.time() - start), istop, itn))
         self.beta = np.matrix(beta).T
         self.u = null_matrix
 
