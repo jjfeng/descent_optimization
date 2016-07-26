@@ -93,7 +93,7 @@ def main(argv):
             assert(arg in METHODS)
             settings.method = arg
         elif opt == "-t":
-            settings.num_threads = int(arg)
+            num_threads = int(arg)
         elif opt == "-r":
             num_runs = int(arg)
 
