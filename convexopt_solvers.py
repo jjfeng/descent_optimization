@@ -569,13 +569,10 @@ class SparseAdditiveModelProblemWrapperSimple:
         self.problem = Problem(Minimize(objective))
 
     def solve(self, lambdas, warm_start=True):
-        print "lambdas", lambdas
         for i,l in enumerate(lambdas):
             self.lambdas[i].value = lambdas[i]
 
         self.problem.solve(solver=SCS, verbose=VERBOSE, warm_start=warm_start)
-
-        print "cvxpy, self.problem.status", self.problem.status, "value", self.problem.value
         return self.thetas.value
 
 class SparseAdditiveModelProblemWrapper:

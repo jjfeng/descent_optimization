@@ -25,7 +25,6 @@ class Sparse_Add_Model_Spearmint(Spearmint_Algo):
         config_file_name = "%s/config.json" % self.result_folder
         if not os.path.exists(config_file_name):
             with open(config_file_name, 'w') as config_file:
-                print "_create_config_string", self._create_config_string(self.num_lambdas)
                 config_file.write(self._create_config_string(self.num_lambdas))
 
     def get_validation_cost(self, thetas):

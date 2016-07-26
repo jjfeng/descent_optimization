@@ -90,6 +90,10 @@ def main(argv):
         elif opt == "-r":
             num_runs = int(arg)
 
+    if settings.method == "SP":
+        # if running spearmint, can only run one thread cause spearmint spawns its own
+        settings.num_threads = 1
+
     settings.print_settings()
     sys.stdout.flush()
 
@@ -149,13 +153,13 @@ def fit_data_for_iter(iter_data):
             algo.run(initial_lambdas, num_iters=settings.nm_iters, log_file=f)
         elif method == "GS":
             algo = Sparse_Add_Model_Grid_Search(iter_data.data)
-            algo.run(gs_lambdas1, gs_lambdas2, log_file=f)
+            algo.run(lambdas1=settings.gs_lambdas1, lambdas2=settings.gs_lambdas2, log_file=f)
         elif method == "HC":
             algo = Sparse_Add_Model_Hillclimb(iter_data.data)
             algo.run([initial_lambdas], debug=False, log_file=f)
         elif method == "SP":
             algo = Sparse_Add_Model_Spearmint(iter_data.data, str_identifer)
-            algo.run(spearmint_numruns, log_file=f)
+            algo.run(settings.spearmint_numruns, log_file=f)
         sys.stdout.flush()
         method_res = create_method_result(iter_data.data, algo.fmodel)
 
