@@ -149,7 +149,7 @@ def fit_data_for_iter(iter_data):
     initial_lambdas_set = [initial_lambdas * 0.01]
     method = iter_data.settings.method
 
-    str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d" % (
+    str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d_%d" % (
         settings.num_funcs,
         settings.num_zero_funcs,
         settings.train_size,
@@ -157,7 +157,8 @@ def fit_data_for_iter(iter_data):
         settings.test_size,
         settings.snr,
         method,
-        iter_data.i
+        iter_data.i,
+        len(initial_lambdas_set),
     )
     log_file_name = "%s/tmp/log_%s.txt" % (settings.results_folder, str_identifer)
     print "log_file_name", log_file_name
