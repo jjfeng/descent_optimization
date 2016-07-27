@@ -18,7 +18,7 @@ class SGL_Hillclimb(Gradient_Descent_Algo):
         self.backtrack_alpha = 0.001
 
     def _create_lambda_configs(self):
-        self.lambda_mins = [1e-6] * (self.data.num_features + 1)
+        self.lambda_mins = [1e-6] * (self.settings.expert_num_groups + 1)
 
     def _create_problem_wrapper(self):
         self.problem_wrapper = GroupedLassoProblemWrapper(
@@ -45,9 +45,6 @@ class SGL_Hillclimb(Gradient_Descent_Algo):
 
         complete_beta_nonzero = np.concatenate(beta_nonzeros)
         X_train_mini = self.data.X_train[:, complete_beta_nonzero]
-        print "self.data.X_train", self.data.X_train.shape
-        print "X_train_mini", X_train_mini.shape
-        print "complete_beta_nonzero", sum(complete_beta_nonzero)
         X_validate_mini = self.data.X_validate[:, complete_beta_nonzero]
 
         if complete_beta_nonzero.size == 0:
@@ -73,10 +70,8 @@ class SGL_Hillclimb(Gradient_Descent_Algo):
 
         def _get_dbeta_dlambda1(beta, matrix_to_invert, num_features_before):
             if beta.size == 0:
-                print "iz zero"
-                return np.zeros(matrix_to_invert.shape[0])
+                return np.zeros((matrix_to_invert.shape[0], 1))
             else:
-                print "iz NOT zero"
                 normed_beta = beta / get_norm2(beta)
                 zero_normed_beta = np.concatenate([
                     np.matrix(np.zeros(num_features_before)).T,
@@ -84,12 +79,10 @@ class SGL_Hillclimb(Gradient_Descent_Algo):
                     np.matrix(np.zeros(total_features - normed_beta.size - num_features_before)).T
                 ])
 
-                dbeta_dlambda1 = (sp.sparse.linalg.lsmr(matrix_to_invert, -1 * zero_normed_beta.A1)[0]).T
-                return dbeta_dlambda1
+                dbeta_dlambda1 = sp.sparse.linalg.lsmr(matrix_to_invert, -1 * zero_normed_beta.A1)[0]
+                return np.matrix(dbeta_dlambda1).T
 
         total_features = X_train_mini.shape[1]
-        print "X_train_mini", X_train_mini.shape
-        print "total_features", total_features
         complete_beta = np.concatenate(beta_minis)
 
         XX = X_train_mini.T * X_train_mini
@@ -104,7 +97,6 @@ class SGL_Hillclimb(Gradient_Descent_Algo):
         num_features_before = 0
         for beta in beta_minis:
             dbeta_dlambda1 = _get_dbeta_dlambda1(beta, matrix_to_invert, num_features_before)
-            print dbeta_dlambda1.shape
             num_features_before += beta.size
 
             if dbeta_dlambda1s is None:  # not initialized yet
@@ -112,10 +104,8 @@ class SGL_Hillclimb(Gradient_Descent_Algo):
             else:
                 dbeta_dlambda1s = np.hstack([dbeta_dlambda1s, dbeta_dlambda1])
 
-        dbeta_dlambda1s = np.matrix(dbeta_dlambda1s).T
-        print "dbeta_dlambda1s", dbeta_dlambda1s.shape
-        print "X_validate_mini", X_validate_mini.shape
-        dbeta_dlambda2 = (sp.sparse.linalg.lsmr(matrix_to_invert, -1 * np.sign(complete_beta).A1)[0]).T
+        dbeta_dlambda1s = np.matrix(dbeta_dlambda1s)
+        dbeta_dlambda2 = np.matrix(sp.sparse.linalg.lsmr(matrix_to_invert, -1 * np.sign(complete_beta).A1)[0]).T
 
         err_vector = self.data.y_validate - X_validate_mini * complete_beta
         df_dlambda1s = -1.0 / self.data.num_validate * (X_validate_mini * dbeta_dlambda1s).T * err_vector

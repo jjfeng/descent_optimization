@@ -29,7 +29,11 @@ def main(argv):
     for opt, arg in opts:
         if opt == '-d':
             data_type = int(arg)
-            if data_type == 1:
+            if data_type == 0:
+                TRAIN_SIZE = 10
+                TOTAL_FEATURES = 30
+                NUM_GROUPS = 3
+            elif data_type == 1:
                 TRAIN_SIZE = 60
                 TOTAL_FEATURES = 300
                 NUM_GROUPS = 30

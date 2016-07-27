@@ -25,6 +25,7 @@ class Elastic_Net_Settings(Simulation_Settings):
     gs_lambdas2 = gs_lambdas1
     num_features = 250
     num_nonzero_features = 15
+    spearmint_numruns = 100 # SHOULD THIS BE LESS? IT"S SO SLOW!
     train_size = 80
     validate_size = 40
     method = "HC"

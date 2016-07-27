@@ -18,6 +18,9 @@ from common import *
 
 class SGL_Settings(Simulation_Settings):
     results_folder = "results/sgl"
+    num_train = 10
+    num_validate = 3
+    num_test = 200
     num_features = 30
     expert_num_groups = 3
     true_num_groups = 3
@@ -126,7 +129,7 @@ def fit_data_for_iter_safe(iter_data):
 
 def fit_data_for_iter(iter_data):
     settings = iter_data.settings
-    one_vec = np.ones(settings.num_features)
+    one_vec = np.ones(settings.expert_num_groups + 1)
     # Note that this produces quite different results from just having the latter set of lambda!
     # Hypothesis: warmstarts finds some good lambdas so that gradient descent will do quite well eventually.
     initial_lambdas_set = [one_vec, one_vec * 1e-1]
@@ -171,12 +174,13 @@ def create_method_result(data, algo, zero_threshold=1e-4):
         algo.best_model_params
     )
 
+    beta_guess = np.concatenate(algo.best_model_params)
+
     guessed_nonzero_elems = np.where(get_nonzero_indices(beta_guess, threshold=zero_threshold))
     true_nonzero_elems = np.where(get_nonzero_indices(data.beta_real, threshold=zero_threshold))
     intersection = np.intersect1d(np.array(guessed_nonzero_elems), np.array(true_nonzero_elems))
     sensitivity = intersection.size / float(guessed_nonzero_elems[0].size) * 100
 
-    beta_guess = np.concatenate(algo.best_model_params)
     beta_err = betaerror(data.beta_real, beta_guess)
 
     print "validation cost %f test_err %f sensitivity %f beta_err %f" % (
@@ -190,6 +194,7 @@ def create_method_result(data, algo, zero_threshold=1e-4):
         validation_err=algo.best_cost,
         beta_err=beta_err,
         runtime=algo.runtime,
+        lambdas=algo.current_lambdas,
     )
 
 if __name__ == "__main__":
