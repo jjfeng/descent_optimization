@@ -31,7 +31,8 @@ class MethodResults:
                 print "sensitivity: %.4f, %.4f" % (np.average(self.sensitivities), get_std_err(self.sensitivities))
 
             print "runtimes: %.4f, %.4f" % (np.average(self.runtimes), get_std_err(self.runtimes))
-            print "average lambdas: %s" % np.mean(np.vstack(self.lambda_sets), axis=0)
+            if len(self.lambda_sets):
+                print "average lambdas: %s" % np.mean(np.vstack(self.lambda_sets), axis=0)
 
     def append(self, result):
         if result.validation_err == None:

@@ -22,7 +22,7 @@ KFOLDS = 5
 GENE_EXPR_FILENAME = "realdata/GDS1615_full.soft"
 
 class Shuffled_Gene_Data:
-    def __init__(self, X_genesets, y, train_size, validate_size):
+    def __init__(self, X_genesets, y, genesets, train_size=TRAIN_SIZE, validate_size=VALIDATE_SIZE):
         X_groups_train_validate, y_train_validate, X_groups_test, y_test = shuffle_and_split_data_full_cv(
             X_genesets, y, train_size + validate_size)
         feature_group_sizes = [Xg.shape[1] for Xg in X_groups_train_validate]
@@ -32,6 +32,7 @@ class Shuffled_Gene_Data:
         self.X_groups_test = X_groups_test
         self.y_test = y_test
         self.X_test = X_test
+        self.genesets = genesets
         self.feature_group_sizes = feature_group_sizes
 
 def main(argv):
@@ -69,7 +70,7 @@ def main(argv):
 
     run_data = []
     for i in range(num_runs):
-        data = Shuffled_Gene_Data(X_genesets, y, TRAIN_SIZE, VALIDATE_SIZE)
+        data = Shuffled_Gene_Data(X_genesets, y, genesets)
         run_data.append(Iteration_Data(i, data, settings))
 
     if num_threads > 1:
@@ -132,7 +133,7 @@ def fit_data_for_iter(iter_data):
         grouped_betas = get_grouped_betas(complete_beta, iter_data.data.feature_group_sizes)
         method_res = create_method_result(
             iter_data.data,
-            complete_beta,
+            grouped_betas,
             validate_cost,
             time.time() - start_time
         )
@@ -151,13 +152,13 @@ def get_grouped_betas(beta, feature_group_sizes):
         start_feature_idx = end_feature_idx
     return final_betas
 
-def create_method_result(data, betas, validate_cost, runtime, threshold=1e-6):
+def create_method_result(data, grouped_betas, validate_cost, runtime, threshold=1e-6):
     test_err, test_rate = testerror_logistic_grouped(
         data.X_test,
         data.y_test,
-        betas
+        grouped_betas
     )
-    nonzeros_betas = get_num_nonzero_betas(betas, genesets, threshold=threshold)
+    nonzeros_betas = get_num_nonzero_betas(grouped_betas, data.genesets, threshold=threshold)
 
     return MethodResult(
         test_err=test_err,
