@@ -35,7 +35,7 @@ class MethodResults:
                 print "average lambdas: %s" % np.mean(np.vstack(self.lambda_sets), axis=0)
 
     def append(self, result):
-        if result.validation_err == None:
+        if result.validation_err is None:
             # ignore input if no validation error. something went wrong with this run
             return
 
