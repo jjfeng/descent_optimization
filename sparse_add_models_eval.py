@@ -20,8 +20,7 @@ class Sparse_Add_Models_Settings(Simulation_Settings):
     results_folder = "results/sparse_add_models"
     num_funcs = 2
     num_zero_funcs = 2
-    # gs_lambdas1 = np.power(10, np.arange(-5, 2, 6.999/10))
-    gs_lambdas1 = np.power(10, np.arange(-3, 1, 3.999/5))
+    gs_lambdas1 = np.power(10, np.arange(-4, 2, 6.999/10))
     gs_lambdas2 = gs_lambdas1
     method = "HC"
 
@@ -169,7 +168,6 @@ def fit_data_for_iter(iter_data):
             algo = Sparse_Add_Model_Nelder_Mead(iter_data.data)
             algo.run(initial_lambdas_set, num_iters=settings.nm_iters, log_file=f)
         elif method == "GS":
-            # TODO: rerun GS with 10 values rather than the 5
             algo = Sparse_Add_Model_Grid_Search(iter_data.data)
             algo.run(lambdas1=settings.gs_lambdas1, lambdas2=settings.gs_lambdas2, log_file=f)
         elif method == "HC":
