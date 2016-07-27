@@ -1,4 +1,3 @@
-import os
 from spearmint_algo import Spearmint_Algo
 from common import testerror_elastic_net
 from convexopt_solvers import ElasticNetProblemWrapper
@@ -13,9 +12,6 @@ class Elastic_Net_Spearmint(Spearmint_Algo):
             self.data.y_train
         )
         self.num_lambdas = 2
-
-    def _solve_problem(self, lambdas):
-        return self.problem_wrapper.solve(lambdas)
 
     def get_validation_cost(self, thetas):
         validation_cost = testerror_elastic_net(

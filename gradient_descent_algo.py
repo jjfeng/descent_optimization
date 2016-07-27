@@ -8,8 +8,9 @@ import cvxpy
 from common import *
 
 class Gradient_Descent_Algo:
-    def __init__(self, data):
+    def __init__(self, data, settings=None):
         self.data = data
+        self.settings = settings
 
         self._create_descent_settings()
         self._create_problem_wrapper()
@@ -157,6 +158,35 @@ class Gradient_Descent_Algo:
                     self.log("USING THE BOUNDARY %f" % new_step_size)
 
         return np.maximum(current_lambdas - new_step_size * lambda_derivatives, self.lambda_mins)
+
+    def _double_check_derivative(self, calculated_derivative, accept_diff=1e-1, epsilon=1e-5):
+        # Returns the numeral derivative if you want it
+        deriv = []
+        num_lambdas = len(self.fmodel.current_lambdas)
+        for i in range(num_lambdas):
+            print "===========CHECK I= %d ===============" % i
+            # don't allow the discrete derivative perturb too much if the lambda value is low already
+            eps = min(epsilon, self.fmodel.current_lambdas[i]/100)
+            reg1 = np.copy(self.fmodel.current_lambdas)
+            reg1[i] += eps
+            model1 = self.problem_wrapper.solve(np.array(reg1), quick_run=False)
+            error1 = self.get_validate_cost(model1)
+
+            reg2 = np.copy(self.fmodel.current_lambdas)
+            reg2[i] -= eps
+            model2 = self.problem_wrapper.solve(np.array(reg2), quick_run=False)
+            error2 = self.get_validate_cost(model2)
+            i_deriv = (error1 - error2)/(epsilon * 2)
+            # print "numerical sum_dthetas_dlambda", np.sum((model1 - thetas2)/(epsilon * 2), axis=1)
+            print "calculated_derivative[i]", calculated_derivative[i]
+            print "numerical deriv", i_deriv
+            deriv.append(i_deriv)
+            print "np.abs(calculated_derivative[i] - i_deriv)", np.abs(calculated_derivative[i] - i_deriv)
+            relative_ok = np.abs((calculated_derivative[i] - i_deriv)/i_deriv) < accept_diff
+            absolute_ok = np.abs(calculated_derivative[i] - i_deriv) < accept_diff
+            assert(relative_ok or absolute_ok)
+
+        return np.hstack(deriv)
 
     def log(self, log_str):
         if self.log_file is None:

@@ -67,7 +67,6 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         self.use_boundary = True
         self.boundary_factor = 0.999999
         self.backtrack_alpha = 0.001
-        self.check_iter = 3 # if multiple inits, check at this iter to make sure the new set of lambdas is better
 
     def _create_lambda_configs(self):
         self.lambda_mins = [1e-6] * (self.data.num_features + 1)
@@ -170,33 +169,6 @@ class Sparse_Add_Model_Hillclimb(Gradient_Descent_Algo):
         #     self.log("Warning: not full rank: %d %d" % (uu.shape[0], rank))
         sum_dtheta_dlambda = u_matrices * dbeta_dlambda
         return sum_dtheta_dlambda
-
-    def _double_check_derivative(self, calculated_derivative, accept_diff=1e-1, epsilon=1e-5):
-        deriv = []
-        num_lambdas = len(self.fmodel.current_lambdas)
-        for i in range(num_lambdas):
-            print "===========CHECK I= %d ===============" % i
-            eps = min(epsilon, self.fmodel.current_lambdas[i]/100)
-            reg1 = [r for r in self.fmodel.current_lambdas]
-            reg1[i] += eps
-            thetas1 = self.problem_wrapper.solve(np.array(reg1), quick_run=False)
-            error1 = self.get_validate_cost(thetas1)
-
-            reg2 = [r for r in self.fmodel.current_lambdas]
-            reg2[i] -= eps
-            thetas2 = self.problem_wrapper.solve(np.array(reg2), quick_run=False)
-            error2 = self.get_validate_cost(thetas2)
-            i_deriv = (error1 - error2)/(epsilon * 2)
-            print "numerical sum_dthetas_dlambda", np.sum((thetas1 - thetas2)/(epsilon * 2), axis=1)
-            print "calculated_derivative[i]", calculated_derivative[i]
-            print "numerical deriv", i_deriv
-            deriv.append(i_deriv)
-            print "np.abs(calculated_derivative[i] - i_deriv)", np.abs(calculated_derivative[i] - i_deriv)
-            relative_ok = np.abs((calculated_derivative[i] - i_deriv)/i_deriv) < accept_diff
-            absolute_ok = np.abs(calculated_derivative[i] - i_deriv) < accept_diff
-            assert(relative_ok or absolute_ok)
-
-        return np.hstack(deriv)
 
     @staticmethod
     def _get_nonzero_theta_vectors(thetas, threshold=1e-8):

@@ -133,7 +133,7 @@ class GroupedLassoProblemWrapper:
             + self.lambda2 * sparsity_regularization)
         self.problem = Problem(objective, [])
 
-    def solve(self, lambdas):
+    def solve(self, lambdas, quick_run=False):
         for idx in self.group_range:
             self.lambda1s[idx].value = lambdas[idx]
 

@@ -26,6 +26,7 @@ class ObservedData:
 
 class DataGenerator:
     def __init__(self, settings):
+        self.settings = settings
         self.train_size = settings.train_size
         self.validate_size = settings.validate_size
         self.test_size = settings.test_size
@@ -62,6 +63,22 @@ class DataGenerator:
         true_y = X * beta_real
         data = self._make_data(true_y, X)
         data.beta_real = beta_real
+        return data
+
+    def sparse_groups(self, base_nonzero_coeff=[1, 2, 3, 4, 5]):
+        group_feature_sizes = self.settings.get_true_group_sizes()
+        nonzero_features = len(base_nonzero_coeff)
+
+        X = np.matrix(np.random.randn(self.total_samples, np.sum(group_feature_sizes)))
+        betas = [
+            np.matrix(np.concatenate((base_nonzero_coeff, np.zeros(num_features - nonzero_features)))).T
+            for num_features in group_feature_sizes
+        ]
+        beta = np.matrix(np.concatenate(betas))
+
+        true_y = X * beta
+        data = self._make_data(true_y, X)
+        data.beta_real = beta
         return data
 
     def _make_data(self, true_y, observed_X):

@@ -15,9 +15,6 @@ class Sparse_Add_Model_Spearmint(Spearmint_Algo):
         )
         self.num_lambdas = self.data.X_full.shape[1] + 1
 
-    def _solve_problem(self, lambdas):
-        return self.problem_wrapper.solve(lambdas, high_accur=False, quick_run=True)
-
     def get_validation_cost(self, thetas):
         validation_cost = testerror_sparse_add_smooth(
             self.data.y_validate,

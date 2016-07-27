@@ -3,8 +3,9 @@ from scipy.optimize import minimize
 from fitted_model import Fitted_Model
 
 class Nelder_Mead_Algo:
-    def __init__(self, data):
+    def __init__(self, data, settings=None):
         self.data = data
+        self.settings = settings
         self._create_problem_wrapper()
 
     def run(self, initial_lambdas_set, num_iters=10, log_file=None):

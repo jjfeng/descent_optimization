@@ -15,8 +15,9 @@ spearmint_lite = __import__('spearmint-lite')
 class Spearmint_Algo:
     MAX_COST = 1e6
 
-    def __init__(self, data, folder_suffix):
+    def __init__(self, data, folder_suffix, settings=None):
         self.data = data
+        self.settings = settings
         # Call problem wrapper first to determine number of lambdas
         self._create_problem_wrapper()
         self._check_make_configs(folder_suffix)
@@ -49,7 +50,7 @@ class Spearmint_Algo:
                         # P means pending experiment to run
                         # Run experiment
                         self.log("lambdas %s" % lambdas)
-                        model_params = self._solve_problem(lambdas)
+                        model_params = self.problem_wrapper.solve(lambdas, quick_run=True)
                         if model_params is None:
                             current_cost = self.MAX_COST
                         else:
