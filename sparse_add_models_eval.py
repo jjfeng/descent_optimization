@@ -144,8 +144,8 @@ def fit_data_for_iter(iter_data):
     initial_lambdas[0] = 10
     # Note that this produces quite different results from just having the latter set of lambda!
     # Hypothesis: warmstarts finds some good lambdas so that gradient descent will do quite well eventually.
-    # initial_lambdas_set = [initial_lambdas * 0.01, initial_lambdas]
-    initial_lambdas_set = [initial_lambdas * 0.01]
+    initial_lambdas_set = [initial_lambdas * 0.01, initial_lambdas]
+    # initial_lambdas_set = [initial_lambdas]
     method = iter_data.settings.method
 
     str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d_%d" % (
