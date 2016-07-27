@@ -196,6 +196,7 @@ def create_method_result(data, algo, zero_threshold=1e-4):
         beta_err=beta_err,
         runtime=algo.runtime,
         lambdas=algo.current_lambdas,
+        sensitivity=sensitivity,
     )
 
 if __name__ == "__main__":
