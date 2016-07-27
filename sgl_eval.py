@@ -24,6 +24,7 @@ class SGL_Settings(Simulation_Settings):
     num_features = 30
     expert_num_groups = 3
     true_num_groups = 3
+    spearmint_numruns = 100 # Less cause so slow?
     gs_lambdas1 = np.power(10, np.arange(-3, 1, 3.999/10))
     gs_lambdas2 = gs_lambdas1
     method = "HC"

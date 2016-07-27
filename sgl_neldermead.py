@@ -10,7 +10,7 @@ class SGL_Nelder_Mead(Nelder_Mead_Algo):
         self.problem_wrapper = GroupedLassoProblemWrapper(
             self.data.X_train,
             self.data.y_train,
-            self.settings.expert_num_groups
+            self.settings.get_expert_group_sizes()
         )
 
     def get_validation_cost(self, lambdas):

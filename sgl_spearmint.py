@@ -10,8 +10,9 @@ class SGL_Spearmint(Spearmint_Algo):
         self.problem_wrapper = GroupedLassoProblemWrapper(
             self.data.X_train,
             self.data.y_train,
-            self.settings.expert_num_groups
+            self.settings.get_expert_group_sizes()
         )
+        self.num_lambdas = self.settings.expert_num_groups + 1
 
     def get_validation_cost(self, model_params):
         return testerror_grouped(

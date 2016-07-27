@@ -6,8 +6,9 @@ from fitted_model import Fitted_Model
 class Grid_Search:
     MAX_COST = 1e5
 
-    def __init__(self, data):
+    def __init__(self, data, settings):
         self.data = data
+        self.settings = settings
         self._create_problem_wrapper()
 
     def run(self, lambdas1, lambdas2=None, log_file=None):
