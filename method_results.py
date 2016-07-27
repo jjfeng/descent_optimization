@@ -15,18 +15,22 @@ class MethodResults:
         return len(self.test_errs)
 
     def print_results(self):
+        num_runs = len(self.validation_errs)
+        def get_std_err(values):
+            return np.sqrt(np.var(values)/num_runs)
+
         if len(self.validation_errs) > 0:
             print self.method_name, "Results: (mean, std dev)"
-            print "validation: %.4f, %.4f" % (np.average(self.validation_errs), np.var(self.validation_errs))
-            print "test: %.4f, %.4f" % (np.average(self.test_errs), np.var(self.test_errs))
+            print "validation: %.4f, %.4f" % (np.average(self.validation_errs), get_std_err(self.validation_errs))
+            print "test: %.4f, %.4f" % (np.average(self.test_errs), get_std_err(self.test_errs))
             if len(self.beta_errs):
-                print "beta: %.4f, %.4f" % (np.average(self.beta_errs), np.var(self.beta_errs))
+                print "beta: %.4f, %.4f" % (np.average(self.beta_errs), get_std_err(self.beta_errs))
             if len(self.theta_errs):
-                print "theta: %.4f, %.4f" % (np.average(self.theta_errs), np.var(self.theta_errs))
+                print "theta: %.4f, %.4f" % (np.average(self.theta_errs), get_std_err(self.theta_errs))
             if len(self.sensitivities):
-                print "sensitivity: %.4f, %.4f" % (np.average(self.sensitivities), np.var(self.sensitivities))
+                print "sensitivity: %.4f, %.4f" % (np.average(self.sensitivities), get_std_err(self.sensitivities))
 
-            print "runtimes: %.4f, %.4f" % (np.average(self.runtimes), np.var(self.runtimes))
+            print "runtimes: %.4f, %.4f" % (np.average(self.runtimes), get_std_err(self.runtimes))
             print "average lambdas: %s" % np.mean(np.vstack(self.lambda_sets), axis=0)
 
     def append(self, result):
