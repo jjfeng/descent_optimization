@@ -143,19 +143,19 @@ def main():
         gs_grouped_runtime = time.time() - start
         gs_grouped_nonzeros = get_num_nonzero_betas(gs_grouped_betas, genesets, threshold=1e-6)
         print "gs_grouped 1e-6", gs_grouped_nonzeros
-        
+
         #start = time.time()
         #gs_complete_beta, gs_validate_cost = gs.run_classify_fullcv(X_groups_train_validate, y_train_validate, feature_group_sizes, KFOLDS)
         #gs_betas = get_grouped_betas(gs_complete_beta, feature_group_sizes)
         #gs_runtime = time.time() - start
         #gs_nonzeros = get_num_nonzero_betas(gs_betas, genesets, threshold=1e-6)
         #print "gs 1e-6", gs_nonzeros
-        
+
         print "================= gs grouped ======================"
         gs_grouped_test, gs_grouped_rate = testerror_logistic_grouped(X_test, y_test, gs_grouped_betas)
         print "gs_grouped_test", gs_grouped_test, "gs_grouped_rate", gs_grouped_rate
         gs_grouped_results.append(MethodResult(test_err=gs_grouped_test, validation_err=gs_grouped_validate_cost, sensitivity=gs_grouped_rate, runtime=gs_grouped_runtime))
-        
+
         print "ITERATION", i
         hc_results.print_results()
         #gs_grouped_results.print_results()
