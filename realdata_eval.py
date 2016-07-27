@@ -121,7 +121,6 @@ def fit_data_for_iter(iter_data):
                 iter_data.data.feature_group_sizes,
                 KFOLDS
             )
-            algo.run(lambdas1=settings.gs_lambdas1, lambdas2=settings.gs_lambdas2, log_file=f)
         elif method == "HC":
             complete_beta, validate_cost, _ = hc.run_for_lambdas(
                 iter_data.data.X_groups_train_validate,
@@ -130,7 +129,6 @@ def fit_data_for_iter(iter_data):
                 KFOLDS,
                 init_lambdas=initial_lambdas
             )
-            algo.run(initial_lambdas_set, debug=False, log_file=f)
         grouped_betas = get_grouped_betas(complete_beta, iter_data.data.feature_group_sizes)
         method_res = create_method_result(
             iter_data.data,

@@ -104,6 +104,7 @@ def run_classify_fullcv(X_groups_train_validate, y_train_validate, feature_group
                 best_cost = cost
                 best_regularization = regularization
                 print "best_cost so far", best_cost, "best_regularization", best_regularization
+                break
                 sys.stdout.flush()
 
     print "gridsearch: best_validation_error", best_cost
