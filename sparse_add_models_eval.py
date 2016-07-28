@@ -2,8 +2,10 @@ import getopt
 import time
 import sys
 import traceback
+import pickle
 import numpy as np
 from multiprocessing import Pool
+import matplotlib.pyplot as plt
 
 from sparse_add_models_hillclimb import Sparse_Add_Model_Hillclimb
 from sparse_add_models_neldermead import Sparse_Add_Model_Nelder_Mead
@@ -15,25 +17,6 @@ from method_results import MethodResult
 from iteration_models import Simulation_Settings, Iteration_Data
 
 from common import *
-
-class Sparse_Add_Models_Settings(Simulation_Settings):
-    results_folder = "results/sparse_add_models"
-    num_funcs = 2
-    num_zero_funcs = 2
-    gs_lambdas1 = np.power(10, np.arange(-4, 2, 6.999/10))
-    gs_lambdas2 = gs_lambdas1
-    method = "HC"
-
-    def print_settings(self):
-        print "SETTINGS"
-        obj_str = "method %s\n" % self.method
-        obj_str += "num_funcs %d\n" % self.num_funcs
-        obj_str += "num_zero_funcs %d\n" % self.num_zero_funcs
-        obj_str += "t/v/t size %d/%d/%d\n" % (self.train_size, self.validate_size, self.test_size)
-        obj_str += "snr %f\n" % self.snr
-        obj_str += "sp runs %d\n" % self.spearmint_numruns
-        obj_str += "nm_iters %d\n" % self.nm_iters
-        print obj_str
 
 ########
 # FUNCTIONS FOR ADDITIVE MODEL
@@ -55,6 +38,30 @@ def pwr_small(x):
 
 def const_zero(x):
     return np.zeros(x.shape)
+
+########
+# Model settings
+########
+class Sparse_Add_Models_Settings(Simulation_Settings):
+    results_folder = "results/sparse_add_models"
+    num_funcs = 3
+    num_zero_funcs = 20
+    gs_lambdas1 = np.power(10, np.arange(-4, 2, 6.999/10))
+    gs_lambdas2 = gs_lambdas1
+    smooth_fcns = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
+    plot = True
+    method = "HC"
+
+    def print_settings(self):
+        print "SETTINGS"
+        obj_str = "method %s\n" % self.method
+        obj_str += "num_funcs %d\n" % self.num_funcs
+        obj_str += "num_zero_funcs %d\n" % self.num_zero_funcs
+        obj_str += "t/v/t size %d/%d/%d\n" % (self.train_size, self.validate_size, self.test_size)
+        obj_str += "snr %f\n" % self.snr
+        obj_str += "sp runs %d\n" % self.spearmint_numruns
+        obj_str += "nm_iters %d\n" % self.nm_iters
+        print obj_str
 
 #########
 # MAIN FUNCTION
@@ -97,9 +104,8 @@ def main(argv):
     settings.print_settings()
     sys.stdout.flush()
 
-    SMOOTH_FCNS = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
-    assert(settings.num_funcs <= len(SMOOTH_FCNS))
-    smooth_fcn_list = SMOOTH_FCNS[:settings.num_funcs] + [const_zero] * settings.num_zero_funcs
+    assert(settings.num_funcs <= len(settings.smooth_fcns))
+    smooth_fcn_list = settings.smooth_fcns[:settings.num_funcs] + [const_zero] * settings.num_zero_funcs
     data_gen = DataGenerator(settings)
 
     run_data = []
@@ -107,7 +113,7 @@ def main(argv):
         observed_data = data_gen.make_additive_smooth_data(smooth_fcn_list)
         run_data.append(Iteration_Data(i, observed_data, settings))
 
-    if settings.method != "SP":
+    if settings.method != "SP" and num_threads > 1:
         print "Do multiprocessing"
         pool = Pool(num_threads)
         results = pool.map(fit_data_for_iter_safe, run_data)
@@ -177,6 +183,8 @@ def fit_data_for_iter(iter_data):
             algo.run(settings.spearmint_numruns, log_file=f)
         sys.stdout.flush()
         method_res = create_method_result(iter_data.data, algo.fmodel)
+        if settings.method == "HC" and settings.plot:
+            plot(iter_data.data, algo.fmodel, settings, label="Gradient Descent")
 
         f.write("SUMMARY\n%s" % method_res)
     return method_res
@@ -194,6 +202,35 @@ def create_method_result(data, algo):
         runtime=algo.runtime,
         lambdas=algo.current_lambdas
     )
+
+def plot(data, algo_model, settings, label=None, func_indices=range(6), ylim=[-15,15], xlim=[-5,5]):
+    file_name = "figures/sparse_add_model_%d_%d_%d_%d_%d" % (settings.num_funcs, settings.num_zero_funcs, data.num_train, data.num_validate, data.num_test)
+
+    # Pickle the plot data
+    pickle_file = "%s.pkl" % file_name
+    with open(pickle_file, "wb") as f:
+        pickle.dump({
+            "data": data,
+            "algo_model": algo_model,
+            "settings": settings
+        }, f)
+
+    for func_idx in func_indices:
+        plt.clf()
+        x_i = data.X_full[:,func_idx]
+        print "x_i", x_i.shape
+        order_indices = np.argsort(x_i, axis=0)
+        sort_x_i = x_i[order_indices]
+        if func_idx < settings.num_funcs:
+            plt.plot(sort_x_i, settings.smooth_fcns[func_idx](sort_x_i), label="Real", color="green", linestyle="--")
+        else:
+            plt.plot(sort_x_i, const_zero(sort_x_i), label="Real", color="green", linestyle="--")
+        plt.plot(sort_x_i, algo_model.best_model_params[order_indices, func_idx], label=label, color="brown")
+        plt.ylim(ylim)
+        plt.xlim(xlim)
+        figname = "%s_func%d.png" % (file_name, func_idx)
+        print "figname", figname
+        plt.savefig(figname)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

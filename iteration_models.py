@@ -8,6 +8,7 @@ class Simulation_Settings:
     nm_iters = 80
     feat_range = [-5,5]
     method = "HC"
+    plot = False
 
 class Iteration_Data:
     def __init__(self, i, data, settings):
