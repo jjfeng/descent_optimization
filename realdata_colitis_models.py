@@ -120,7 +120,7 @@ class KFoldData:
         gc.collect()
         print "GC Done"
         matrix_to_invert = X_train_mini.T * diag_expXb_components * X_train_mini + dgrouplasso_dlambda
-        inverted_matrix = sp.linalg.pinvh(matrix_to_invert)
+        inverted_matrix = sp.linalg.pinvh(matrix_to_invert, rcond=1e-10)
         print "matrix_to_invert inverted!"
 
         dbeta_dlambda1s = np.matrix(np.zeros((0,0))).T
