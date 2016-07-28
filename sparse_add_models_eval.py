@@ -49,7 +49,7 @@ class Sparse_Add_Models_Settings(Simulation_Settings):
     gs_lambdas1 = np.power(10, np.arange(-4, 2, 6.999/10))
     gs_lambdas2 = gs_lambdas1
     smooth_fcns = [big_sin, identity_fcn, big_cos_sin, crazy_down_sin, pwr_small]
-    plot = True
+    plot = False #True
     method = "HC"
 
     def print_settings(self):
@@ -183,7 +183,7 @@ def fit_data_for_iter(iter_data):
             algo.run(settings.spearmint_numruns, log_file=f)
         sys.stdout.flush()
         method_res = create_method_result(iter_data.data, algo.fmodel)
-        if settings.method == "HC" and settings.plot:
+        if settings.plot:
             plot(iter_data.data, algo.fmodel, settings, label="Gradient Descent")
 
         f.write("SUMMARY\n%s" % method_res)
@@ -204,7 +204,14 @@ def create_method_result(data, algo):
     )
 
 def plot(data, algo_model, settings, label=None, func_indices=range(6), ylim=[-15,15], xlim=[-5,5]):
-    file_name = "figures/sparse_add_model_%d_%d_%d_%d_%d" % (settings.num_funcs, settings.num_zero_funcs, data.num_train, data.num_validate, data.num_test)
+    file_name = "figures/sparse_add_model_%d_%d_%d_%d_%d_%s" % (
+        settings.num_funcs,
+        settings.num_zero_funcs,
+        data.num_train,
+        data.num_validate,
+        data.num_test,
+        settings.method
+    )
 
     # Pickle the plot data
     pickle_file = "%s.pkl" % file_name

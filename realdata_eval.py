@@ -158,10 +158,12 @@ def create_method_result(data, grouped_betas, validate_cost, runtime, threshold=
         data.y_test,
         grouped_betas
     )
-    nonzeros_betas = get_num_nonzero_betas(grouped_betas, data.genesets, threshold=threshold)
+    nonzeros_genes, nonzero_genesets = get_num_nonzero_betas(grouped_betas, data.genesets, threshold=threshold)
 
     return MethodResult(
         test_err=test_err,
+        beta_err=nonzeros_genes, ## HACK: using this slot, but probably shouldnt
+        theta_err=nonzero_genesets,  ## HACK: using this slot, but probably shouldnt
         validation_err=validate_cost,
         sensitivity=test_rate,
         runtime=runtime
