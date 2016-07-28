@@ -1,3 +1,4 @@
+import gc
 import numpy as np
 import scipy as sp
 from common import *
@@ -115,6 +116,9 @@ class KFoldData:
         dgrouplasso_dlambda = sp.linalg.block_diag(*block_diag_components) + sp.linalg.block_diag(*diagonal_components)
 
         print "X_train_mini", X_train_mini.shape
+        print "GC"
+        gc.collect()
+        print "GC Done"
         matrix_to_invert = X_train_mini.T * diag_expXb_components * X_train_mini + dgrouplasso_dlambda
         inverted_matrix = sp.linalg.pinvh(matrix_to_invert)
         print "matrix_to_invert inverted!"
