@@ -5,7 +5,7 @@ class Simulation_Settings:
     snr = 2
     gs_num_lambdas = 10
     spearmint_numruns = 100
-    nm_iters = 80
+    nm_iters = 50
     feat_range = [-5,5]
     method = "HC"
     plot = False
