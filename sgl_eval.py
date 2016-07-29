@@ -184,10 +184,10 @@ def create_method_result(data, algo, zero_threshold=1e-6):
 
     beta_err = betaerror(data.beta_real, beta_guess)
 
-    print "validation cost %f test_err %f sensitivity %f beta_err %f" % (
+    print "validation cost %f test_err %f percent_correct_nonzeros %f beta_err %f" % (
         algo.best_cost,
         test_err,
-        sensitivity,
+        percent_correct_nonzeros,
         beta_err,
     )
     return MethodResult(
