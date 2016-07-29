@@ -180,7 +180,7 @@ def create_method_result(data, algo, zero_threshold=1e-6):
     guessed_nonzero_elems = np.where(get_nonzero_indices(beta_guess, threshold=zero_threshold))
     true_nonzero_elems = np.where(get_nonzero_indices(data.beta_real, threshold=zero_threshold))
     intersection = np.intersect1d(np.array(guessed_nonzero_elems), np.array(true_nonzero_elems))
-    sensitivity = intersection.size / float(guessed_nonzero_elems[0].size) * 100
+    percent_correct_nonzeros = intersection.size / float(true_nonzero_elems[0].size) * 100
 
     beta_err = betaerror(data.beta_real, beta_guess)
 
@@ -196,7 +196,7 @@ def create_method_result(data, algo, zero_threshold=1e-6):
         beta_err=beta_err,
         runtime=algo.runtime,
         lambdas=algo.current_lambdas,
-        sensitivity=sensitivity,
+        sensitivity=percent_correct_nonzeros, # not exactly the right label, but oh well
     )
 
 if __name__ == "__main__":
