@@ -136,7 +136,7 @@ def fit_data_for_iter(iter_data):
     initial_lambdas_set = [one_vec, one_vec * 1e-1]
     method = iter_data.settings.method
 
-    str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d" % (
+    str_identifer = "%d_%d_%d_%d_%d_%d_%s_%d_thres6" % (
         settings.expert_num_groups,
         settings.num_features,
         settings.train_size,
@@ -168,7 +168,7 @@ def fit_data_for_iter(iter_data):
         f.write("SUMMARY\n%s" % method_res)
     return method_res
 
-def create_method_result(data, algo, zero_threshold=1e-4):
+def create_method_result(data, algo, zero_threshold=1e-6):
     test_err = testerror_grouped(
         data.X_test,
         data.y_test,
