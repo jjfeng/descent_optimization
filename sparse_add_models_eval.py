@@ -222,6 +222,7 @@ def plot(data, algo_model, settings, label=None, func_indices=range(6), ylim=[-1
             "settings": settings
         }, f)
 
+    plt.figure(figsize=(5,4))
     for func_idx in func_indices:
         plt.clf()
         x_i = data.X_full[:,func_idx]
@@ -229,12 +230,13 @@ def plot(data, algo_model, settings, label=None, func_indices=range(6), ylim=[-1
         order_indices = np.argsort(x_i, axis=0)
         sort_x_i = x_i[order_indices]
         if func_idx < settings.num_funcs:
-            plt.plot(sort_x_i, settings.smooth_fcns[func_idx](sort_x_i), label="Real", color="green", linestyle="--")
+            plt.plot(sort_x_i, settings.smooth_fcns[func_idx](sort_x_i), label="Real", color="blue", linestyle="--")
         else:
-            plt.plot(sort_x_i, const_zero(sort_x_i), label="Real", color="green", linestyle="--")
-        plt.plot(sort_x_i, algo_model.best_model_params[order_indices, func_idx], label=label, color="brown")
+            plt.plot(sort_x_i, const_zero(sort_x_i), label="Real", color="blue", linestyle="--")
+        plt.plot(sort_x_i, algo_model.best_model_params[order_indices, func_idx], label=label, color="orange")
         plt.ylim(ylim)
         plt.xlim(xlim)
+        plt.tick_params(axis='both', which='major', labelsize=14)
         figname = "%s_func%d.png" % (file_name, func_idx)
         print "figname", figname
         plt.savefig(figname)
