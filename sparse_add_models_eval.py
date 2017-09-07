@@ -222,7 +222,7 @@ def plot(data, algo_model, settings, label=None, func_indices=range(6), ylim=[-1
             "settings": settings
         }, f)
 
-    plt.figure(figsize=(5,4))
+    plt.figure(figsize=(3.5,3))
     for func_idx in func_indices:
         plt.clf()
         x_i = data.X_full[:,func_idx]
